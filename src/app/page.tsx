@@ -11,7 +11,7 @@ export default function TempoMockups() {
             <div className="text-2xl font-semibold mb-2 text-black">Tempo</div>
             <div className="text-sm text-black mb-6">Smart scheduling for focused students</div>
             <div className="space-y-4">
-              <input className="w-full rounded-xl border p-3 text-black" value="wilson@example.com" readOnly />
+              <input className="w-full rounded-xl border p-3 text-black" value="john.doe@example.com" readOnly />
               <input className="w-full rounded-xl border p-3 text-black" value="••••••••••" readOnly />
               <button className="w-full rounded-xl bg-slate-900 text-white py-3">Sign In</button>
               <button className="w-full rounded-xl border py-3 text-black">Create Account</button>
@@ -23,7 +23,7 @@ export default function TempoMockups() {
             <div className="space-y-4 text-sm">
               <div>
                 <div className="mb-1 text-black">Name</div>
-                <div className="rounded-xl border p-3 text-black">Wilson G.</div>
+                <div className="rounded-xl border p-3 text-black">John Doe</div>
               </div>
               <div>
                 <div className="mb-1 text-black">Preferred Study Hours</div>
@@ -310,7 +310,7 @@ export default function TempoMockups() {
           <div className="lg:col-span-2 bg-white rounded-2xl border p-6 shadow-sm">
             <div className="text-xl font-semibold mb-5 text-black">Daily Morning Briefing</div>
             <div className="rounded-2xl bg-slate-50 border p-5 text-black">
-              <div className="text-sm text-black">Good morning, Wilson. Here are your top 3 priorities.</div>
+              <div className="text-sm text-black">Good morning, John Doe. Here are your top 3 priorities.</div>
               <div className="space-y-3">
                 {[
                   "1. Submit Project 4 Design Milestone — due today 11:59 PM",
