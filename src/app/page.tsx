@@ -1,87 +1,10 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-
-type TaskStatus = "Not Started" | "In Progress" | "Completed";
-
-type Task = {
-  id: number;
-  title: string;
-  category: string;
-  description: string;
-  date: string;
-  startHour: number;
-  durationMinutes: number;
-  status: TaskStatus;
-  archived: boolean;
-};
-
-type Goal = {
-  id: number;
-  title: string;
-  taskIds: number[];
-};
-
-type Reminder = {
-  id: number;
-  taskId: number;
-  minutesBefore: number;
-};
-
-type SessionState = "idle" | "active" | "break";
-type TempoTab = "Dashboard" | "Active Tasks" | "Archive" | "Reminders" | "Goals" | "Focus" | "Export";
-
-const initialTasks: Task[] = [
-  {
-    id: 1,
-    title: "OS Project Design Milestone",
-    category: "CS4284",
-    description: "Finalize diagrams and report draft",
-    date: "2026-04-27",
-    startHour: 20,
-    durationMinutes: 90,
-    status: "In Progress",
-    archived: false,
-  },
-  {
-    id: 2,
-    title: "Database Homework",
-    category: "CS3114",
-    description: "Complete query optimization section",
-    date: "2026-04-27",
-    startHour: 9,
-    durationMinutes: 60,
-    status: "Not Started",
-    archived: false,
-  },
-  {
-    id: 3,
-    title: "Old Physics Notes Review",
-    category: "PHYS",
-    description: "Review exam notes",
-    date: "2026-04-10",
-    startHour: 18,
-    durationMinutes: 45,
-    status: "Completed",
-    archived: true,
-  },
-  {
-    id: 4,
-    title: "SQL Lab 9",
-    category: "CS3114",
-    description: "Finish indexing section",
-    date: "2026-04-12",
-    startHour: 15,
-    durationMinutes: 50,
-    status: "Completed",
-    archived: true,
-  },
-];
-
-const initialGoals: Goal[] = [
-  { id: 1, title: "Graduate Strong", taskIds: [1, 2, 4] },
-  { id: 2, title: "Finish Senior Project", taskIds: [1] },
-];
+import { AppHeader } from "../components/tempo/AppHeader";
+import { SidebarMenu } from "../components/tempo/SidebarMenu";
+import { initialGoals, initialTasks, tempoTabs } from "../components/tempo/constants";
+import { Goal, Reminder, SessionState, Task, TaskStatus, TempoTab } from "../components/tempo/types";
 
 export default function TempoDashboard() {
   const [loggedIn] = useState(true);
@@ -94,7 +17,11 @@ export default function TempoDashboard() {
   const [archiveCategory, setArchiveCategory] = useState("All");
   const [archiveDateFrom, setArchiveDateFrom] = useState("");
   const [archiveDateTo, setArchiveDateTo] = useState("");
+  const [archiveReasonFilter, setArchiveReasonFilter] = useState("All");
+  const [archiveSort, setArchiveSort] = useState("Newest archived");
   const [archiveError, setArchiveError] = useState("");
+  const [archiveActionError, setArchiveActionError] = useState("");
+  const [archiveActionPendingTaskId, setArchiveActionPendingTaskId] = useState<number | null>(null);
   const [agendaFrom, setAgendaFrom] = useState("2026-04-27");
   const [agendaTo, setAgendaTo] = useState("2026-05-02");
   const [agendaError, setAgendaError] = useState("");
@@ -110,6 +37,8 @@ export default function TempoDashboard() {
   const [focusTaskId, setFocusTaskId] = useState<number>(1);
   const [breakMinutes, setBreakMinutes] = useState(5);
   const [activeTab, setActiveTab] = useState<TempoTab>("Dashboard");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [archiveReasonInput, setArchiveReasonInput] = useState("Completed");
   const [uiMessage, setUiMessage] = useState("Welcome back. Core Tempo features are active.");
 
   const nowDate = "2026-04-27";
@@ -129,18 +58,36 @@ export default function TempoDashboard() {
   const archiveResults = useMemo(() => {
     const from = archiveDateFrom ? new Date(archiveDateFrom).getTime() : undefined;
     const to = archiveDateTo ? new Date(archiveDateTo).getTime() : undefined;
-    return archivedTasks.filter((task) => {
+    const filtered = archivedTasks.filter((task) => {
       const taskDate = new Date(task.date).getTime();
       const matchesQuery =
         task.title.toLowerCase().includes(archiveQuery.toLowerCase()) ||
         task.category.toLowerCase().includes(archiveQuery.toLowerCase()) ||
         task.description.toLowerCase().includes(archiveQuery.toLowerCase());
       const matchesCategory = archiveCategory === "All" || task.category === archiveCategory;
+      const matchesReason = archiveReasonFilter === "All" || task.archiveReason === archiveReasonFilter;
       const matchesFrom = from === undefined || taskDate >= from;
       const matchesTo = to === undefined || taskDate <= to;
-      return matchesQuery && matchesCategory && matchesFrom && matchesTo;
+      return matchesQuery && matchesCategory && matchesReason && matchesFrom && matchesTo;
     });
-  }, [archivedTasks, archiveQuery, archiveCategory, archiveDateFrom, archiveDateTo]);
+
+    return [...filtered].sort((a, b) => {
+      const archivedAtA = a.archivedAt ? new Date(a.archivedAt).getTime() : 0;
+      const archivedAtB = b.archivedAt ? new Date(b.archivedAt).getTime() : 0;
+      if (archiveSort === "Oldest archived") {
+        return archivedAtA - archivedAtB;
+      }
+      return archivedAtB - archivedAtA;
+    });
+  }, [
+    archivedTasks,
+    archiveQuery,
+    archiveCategory,
+    archiveReasonFilter,
+    archiveDateFrom,
+    archiveDateTo,
+    archiveSort,
+  ]);
 
   const focusConflict = useMemo(() => {
     const selected = tasks.find((task) => task.id === focusTaskId);
@@ -267,6 +214,63 @@ export default function TempoDashboard() {
     setUiMessage("Archive filter applied.");
   };
 
+  const archiveTask = (taskId: number) => {
+    setArchiveActionError("");
+    if (!archiveReasonInput.trim()) {
+      setArchiveActionError("Please select a valid archive reason.");
+      return;
+    }
+    setArchiveActionPendingTaskId(taskId);
+    window.setTimeout(() => {
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                archived: true,
+                archivedAt: new Date().toISOString(),
+                archiveReason: archiveReasonInput,
+              }
+            : task,
+        ),
+      );
+      setArchiveActionPendingTaskId(null);
+      setUiMessage("Task archived successfully.");
+      setActiveTab("Archive");
+    }, 500);
+  };
+
+  const restoreTask = (taskId: number) => {
+    setArchiveActionPendingTaskId(taskId);
+    window.setTimeout(() => {
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId
+            ? { ...task, archived: false, archivedAt: null, archiveReason: null }
+            : task,
+        ),
+      );
+      setArchiveActionPendingTaskId(null);
+      setUiMessage("Archived task restored to active tasks.");
+    }, 500);
+  };
+
+  const deleteArchivedTask = (taskId: number) => {
+    setArchiveActionPendingTaskId(taskId);
+    window.setTimeout(() => {
+      setTasks((prev) => prev.filter((task) => task.id !== taskId));
+      setGoals((prev) =>
+        prev.map((goal) => ({
+          ...goal,
+          taskIds: goal.taskIds.filter((goalTaskId) => goalTaskId !== taskId),
+        })),
+      );
+      setReminders((prev) => prev.filter((reminder) => reminder.taskId !== taskId));
+      setArchiveActionPendingTaskId(null);
+      setUiMessage("Archived task permanently deleted.");
+    }, 500);
+  };
+
   const startFocusSession = () => {
     setSessionError("");
     if (sessionDuration < 10 || sessionDuration > 240) {
@@ -313,44 +317,20 @@ export default function TempoDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-6 text-black md:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <header className="rounded-2xl border bg-white p-5 shadow-sm">
-          <h1 className="text-3xl font-semibold">Tempo Functional MVP</h1>
-          <p className="mt-2 text-sm text-slate-700">
-            Implemented use-case flows for tasks, archive retrieval, reminders, goals, focus mode,
-            conflict handling, break management, and agenda export.
-          </p>
-          <p className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-sm">{uiMessage}</p>
-        </header>
+    <main className="min-h-screen bg-slate-100 text-black">
+      <AppHeader onOpenMenu={() => setIsMenuOpen(true)} uiMessage={uiMessage} />
+      <SidebarMenu
+        activeTab={activeTab}
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          setIsMenuOpen(false);
+        }}
+        tabs={tempoTabs}
+      />
 
-        <nav className="rounded-2xl border bg-white p-3 shadow-sm">
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                "Dashboard",
-                "Active Tasks",
-                "Archive",
-                "Reminders",
-                "Goals",
-                "Focus",
-                "Export",
-              ] as TempoTab[]
-            ).map((tab) => (
-              <button
-                key={tab}
-                className={`rounded-lg px-3 py-2 text-sm ${
-                  activeTab === tab ? "bg-slate-900 text-white" : "border hover:bg-slate-100"
-                }`}
-                onClick={() => setActiveTab(tab)}
-                type="button"
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </nav>
-
+      <div className="mx-auto max-w-7xl space-y-6 p-6 md:p-8">
         {activeTab === "Dashboard" && (
           <section className="grid gap-6 lg:grid-cols-3">
             <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
@@ -424,6 +404,22 @@ export default function TempoDashboard() {
                   <option>Completed</option>
                 </select>
               </div>
+              <div className="mb-3 grid gap-2 md:grid-cols-2">
+                <select
+                  className="rounded-lg border p-2 text-sm"
+                  onChange={(event) => setArchiveReasonInput(event.target.value)}
+                  value={archiveReasonInput}
+                >
+                  <option>Completed</option>
+                  <option>No longer relevant</option>
+                  <option>Duplicate task</option>
+                  <option>Deferred</option>
+                </select>
+                <p className="rounded-lg border border-dashed p-2 text-sm">
+                  Select an archive reason, then use the Archive button on a task.
+                </p>
+              </div>
+              {archiveActionError && <p className="mb-2 text-sm text-red-600">{archiveActionError}</p>}
               <div className="space-y-2">
                 {activeTaskResults.length === 0 ? (
                   <p className="rounded-lg border border-dashed p-3 text-sm">No matching tasks found.</p>
@@ -431,9 +427,17 @@ export default function TempoDashboard() {
                   activeTaskResults.map((task) => (
                     <div key={task.id} className="rounded-lg border p-3 text-sm">
                       <div className="font-medium">{task.title}</div>
-                      <div>
+                      <div className="mb-2">
                         {task.category} - {task.status}
                       </div>
+                      <button
+                        className="rounded-lg border px-3 py-1 text-xs hover:bg-slate-100"
+                        disabled={archiveActionPendingTaskId === task.id}
+                        onClick={() => archiveTask(task.id)}
+                        type="button"
+                      >
+                        {archiveActionPendingTaskId === task.id ? "Archiving..." : "Archive Task"}
+                      </button>
                     </div>
                   ))
                 )}
@@ -446,7 +450,7 @@ export default function TempoDashboard() {
           <section className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
               <h2 className="mb-3 text-xl font-semibold">Retrieve Archived Tasks</h2>
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-3">
                 <input
                   className="rounded-lg border p-2 text-sm"
                   onBlur={validateArchiveFilters}
@@ -464,6 +468,17 @@ export default function TempoDashboard() {
                   <option>CS3114</option>
                   <option>PHYS</option>
                 </select>
+                <select
+                  className="rounded-lg border p-2 text-sm"
+                  onChange={(event) => setArchiveReasonFilter(event.target.value)}
+                  value={archiveReasonFilter}
+                >
+                  <option>All</option>
+                  <option>Completed</option>
+                  <option>No longer relevant</option>
+                  <option>Duplicate task</option>
+                  <option>Deferred</option>
+                </select>
                 <input
                   className="rounded-lg border p-2 text-sm"
                   onBlur={validateArchiveFilters}
@@ -478,6 +493,14 @@ export default function TempoDashboard() {
                   type="date"
                   value={archiveDateTo}
                 />
+                <select
+                  className="rounded-lg border p-2 text-sm"
+                  onChange={(event) => setArchiveSort(event.target.value)}
+                  value={archiveSort}
+                >
+                  <option>Newest archived</option>
+                  <option>Oldest archived</option>
+                </select>
               </div>
               {archiveError && <p className="mt-2 text-sm text-red-600">{archiveError}</p>}
               <div className="mt-3 space-y-2">
@@ -489,8 +512,30 @@ export default function TempoDashboard() {
                   archiveResults.map((task) => (
                     <div key={task.id} className="rounded-lg border p-3 text-sm">
                       <div className="font-medium">{task.title}</div>
-                      <div>
+                      <div className="mb-2">
                         {task.date} - {task.category}
+                      </div>
+                      <div className="mb-2 text-xs text-slate-600">
+                        Archived: {task.archivedAt ? new Date(task.archivedAt).toLocaleString() : "Unknown"} |
+                        Reason: {task.archiveReason ?? "N/A"}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          className="rounded-lg border px-3 py-1 text-xs hover:bg-slate-100"
+                          disabled={archiveActionPendingTaskId === task.id}
+                          onClick={() => restoreTask(task.id)}
+                          type="button"
+                        >
+                          {archiveActionPendingTaskId === task.id ? "Working..." : "Restore"}
+                        </button>
+                        <button
+                          className="rounded-lg border border-red-300 px-3 py-1 text-xs text-red-700 hover:bg-red-50"
+                          disabled={archiveActionPendingTaskId === task.id}
+                          onClick={() => deleteArchivedTask(task.id)}
+                          type="button"
+                        >
+                          {archiveActionPendingTaskId === task.id ? "Working..." : "Delete Permanently"}
+                        </button>
                       </div>
                     </div>
                   ))
