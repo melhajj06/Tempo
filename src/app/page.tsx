@@ -1,375 +1,708 @@
 "use client";
 
-export default function TempoMockups() {
-  const screens = [
-    {
-      title: "1. Sign In / Registration",
-      description: "Authentication, password reset, profile setup, and secure access entry points.",
-      content: (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl shadow-sm border p-6">
-            <div className="text-2xl font-semibold mb-2 text-black">Tempo</div>
-            <div className="text-sm text-black mb-6">Smart scheduling for focused students</div>
-            <div className="space-y-4">
-              <input className="w-full rounded-xl border p-3 text-black" value="john.doe@example.com" readOnly />
-              <input className="w-full rounded-xl border p-3 text-black" value="••••••••••" readOnly />
-              <button className="w-full rounded-xl bg-slate-900 text-white py-3">Sign In</button>
-              <button className="w-full rounded-xl border py-3 text-black">Create Account</button>
-              <div className="text-sm text-blue-600">Forgot password?</div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-sm border p-6">
-            <div className="text-lg font-semibold mb-4 text-black">Set Up Your Profile</div>
-            <div className="space-y-4 text-sm">
-              <div>
-                <div className="mb-1 text-black">Name</div>
-                <div className="rounded-xl border p-3 text-black">John Doe</div>
-              </div>
-              <div>
-                <div className="mb-1 text-black">Preferred Study Hours</div>
-                <div className="rounded-xl border p-3 text-black">7:00 PM – 11:00 PM</div>
-              </div>
-              <div>
-                <div className="mb-1 text-black">Notification Preferences</div>
-                <div className="flex gap-2 flex-wrap">
-                <span className="px-3 py-2 rounded-full bg-slate-100 text-black">Email</span>
-                  <span className="px-3 py-2 rounded-full bg-slate-100 text-black">Push</span>
-                  <span className="px-3 py-2 rounded-full bg-slate-100 text-black">Daily Briefing</span>
-                </div>
-              </div>
-              <div>
-                <div className="mb-1 text-black">Schedule Sharing</div>
-                <div className="rounded-xl border p-3 text-black">Share with: alex@vt.edu (View Only)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "2. Main Dashboard / Multi-View Agenda",
-      description: "Daily, weekly, monthly, and priority-focused scheduling views with AI recommendations.",
-      content: (
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          <div className="xl:col-span-1 bg-slate-900 text-white rounded-2xl p-5 shadow-sm">
-            <div className="text-xl font-semibold mb-6">Tempo</div>
-            <div className="space-y-3 text-sm">
-              <div className="bg-white/10 rounded-xl px-3 py-2">Dashboard</div>
-              <div className="rounded-xl px-3 py-2">Tasks</div>
-              <div className="rounded-xl px-3 py-2">Focus Mode</div>
-              <div className="rounded-xl px-3 py-2">Reports</div>
-              <div className="rounded-xl px-3 py-2">Archive</div>
-              <div className="rounded-xl px-3 py-2">Settings</div>
-            </div>
-          </div>
-          <div className="xl:col-span-3 space-y-6">
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <div>
-                  <div className="text-2xl font-semibold text-black">Monday Overview</div>
-                  <div className="text-sm text-black">Next best task based on urgency, time, and focus hours</div>
-                </div>
-                <div className="flex gap-2 text-sm">
-                  <span className="px-3 py-2 rounded-full bg-slate-900 text-white">Daily</span>
-                  <span className="px-3 py-2 rounded-full bg-slate-100">Weekly</span>
-                  <span className="px-3 py-2 rounded-full bg-slate-100">Monthly</span>
-                  <span className="px-3 py-2 rounded-full bg-slate-100">Priority Only</span>
-                </div>
-              </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="rounded-2xl bg-slate-50 p-4 border">
-                  <div className="text-sm text-black mb-1">AI Suggestion</div>
-                  <div className="font-semibold text-black">Finish OS Project Design</div>
-                  <div className="text-sm mt-2 text-black">Urgency score: 93</div>
-                  <div className="text-sm text-black">Best slot: 8:00 PM – 9:30 PM</div>
-                </div>
-                <div className="rounded-2xl bg-slate-50 p-4 border">
-                  <div className="text-sm text-black mb-1">Gap Analysis</div>
-                  <div className="font-semibold text-black">2:00 PM – 3:00 PM free</div>
-                  <div className="text-sm mt-2 text-black">Suggested task: SQL lab review</div>
-                </div>
-                <div className="rounded-2xl bg-slate-50 p-4 border">
-                  <div className="text-sm text-black mb-1">Workload Alert</div>
-                  <div className="font-semibold text-black">Thursday overloaded</div>
-                  <div className="text-sm mt-2 text-black">8.5 hrs scheduled</div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-4 text-black">Today's Timeline</div>
-              <div className="space-y-3">
-                {[
-                  ["9:00 AM", "Database Homework", "High", "CS"],
-                  ["1:00 PM", "Team Meeting", "Medium", "Project"],
-                  ["3:30 PM", "Gym", "Low", "Personal"],
-                  ["8:00 PM", "OS Project Design", "Critical", "CS"],
-                ].map(([time, task, priority, cat]) => (
-                  <div key={task} className="grid grid-cols-12 gap-3 items-center rounded-xl border p-3 text-sm">
-                    <div className="col-span-2 font-medium text-black">{time}</div>
-                    <div className="col-span-5 text-black">{task}</div>
-                    <div className="col-span-2"><span className="px-2 py-1 rounded-full bg-slate-100 text-black">{priority}</span></div>
-                    <div className="col-span-2 text-black">{cat}</div>
-                    <div className="col-span-1 text-right">⋯</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "3. Task Creation + Bulk Processing",
-      description: "Single-flow task entry, urgency logic, conflict detection, and multi-select actions.",
-      content: (
-        <div className="grid lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3 bg-white rounded-2xl border p-6 shadow-sm">
-            <div className="text-xl font-semibold mb-5 text-black">Create New Task</div>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="mb-1 text-black">Title</div>
-                <div className="rounded-xl border p-3 text-black">Prepare design milestone</div>
-              </div>
-              <div>
-                <div className="mb-1 text-black">Category</div>
-                <div className="rounded-xl border p-3 text-black">School / CS4284</div>
-              </div>
-              <div className="md:col-span-2">
-                <div className="mb-1 text-black">Description</div>
-                <div className="rounded-xl border p-3 h-24 text-black">Finish diagrams, finalize report sections, and submit before midnight.</div>
-              </div>
-              <div>
-                <div className="mb-1 text-black">Deadline</div>
-                <div className="rounded-xl border p-3 text-black">Apr 18, 11:59 PM</div>
-              </div>
-              <div>
-                <div className="mb-1 text-black">Estimated Duration</div>
-                <div className="rounded-xl border p-3 text-black">2 hours</div>
-              </div>
-              <div>
-                <div className="mb-1 text-black">Importance</div>
-                <div className="rounded-xl border p-3 text-black">9 / 10</div>
-              </div>
-              <div>
-                <div className="mb-1 text-black">Urgency Score</div>
-                <div className="rounded-xl border p-3 bg-slate-50 text-black">Calculated: 91</div>
-              </div>
-            </div>
-            <div className="mt-5 flex gap-3">
-                  <button className="rounded-xl bg-slate-900 text-white px-4 py-3 font-medium">Save Task</button>
-              <button className="rounded-xl border px-4 py-3 text-black">Preview Schedule Fit</button>
-            </div>
-          </div>
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Conflict Resolution</div>
-              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-black">
-                This task overlaps with <span className="font-medium">Team Meeting</span> from 8:00 PM – 8:30 PM.
-              </div>
-              <div className="mt-3 space-y-2 text-sm">
-                <div className="rounded-xl border p-3 text-black">Move new task to 8:30 PM</div>
-                <div className="rounded-xl border p-3 text-black">Shorten meeting block</div>
-                <div className="rounded-xl border p-3 text-black">Override and keep both</div>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-lg font-semibold">Bulk Actions</div>
-                <div className="text-sm text-black">3 selected</div>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="rounded-xl border p-3 text-black">Delete Selected</div>
-                <div className="rounded-xl border p-3 text-black">Reschedule Selected</div>
-                <div className="rounded-xl border p-3 text-black">Change Category</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "4. Focus Mode / Pomodoro",
-      description: "Distraction mitigation, locked schedule editing, break prompts, and live progress tracking.",
-      content: (
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-slate-950 text-white rounded-3xl p-8 shadow-sm">
-            <div className="flex items-center justify-between mb-10">
-              <div>
-                <div className="text-sm uppercase tracking-widest text-black">Focus Session</div>
-                <div className="text-3xl font-semibold text-white">Operating Systems Project</div>
-              </div>
-              <div className="px-4 py-2 rounded-full bg-white/10 text-sm">Schedule Locked</div>
-            </div>
-            <div className="flex flex-col items-center justify-center py-10">
-              <div className="w-56 h-56 rounded-full border-8 border-white/20 flex items-center justify-center text-5xl font-semibold">24:18</div>
-              <div className="mt-5 text-black">Pomodoro Session 3 of 4</div>
-            </div>
-            <div className="grid md:grid-cols-3 gap-4 mt-8 text-sm">
-              <div className="rounded-2xl bg-white/5 p-4">Started: 8:00 PM</div>
-              <div className="rounded-2xl bg-white/5 p-4">Category: CS4284</div>
-              <div className="rounded-2xl bg-white/5 p-4">Break due in 24 min</div>
-            </div>
-          </div>
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Today's Weighted Progress</div>
-              <div className="w-full h-4 rounded-full bg-slate-100 overflow-hidden">
-                <div className="h-full w-2/3 bg-slate-900 rounded-full"></div>
-              </div>
-              <div className="mt-2 text-sm text-black">67% of weighted workload completed</div>
-            </div>
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Activity Log</div>
-              <div className="space-y-2 text-sm">
-                <div className="rounded-xl bg-slate-50 p-3 border text-black">7:00 PM – 7:25 PM · SQL review</div>
-                <div className="rounded-xl bg-slate-50 p-3 border text-black">7:30 PM – 7:55 PM · Break</div>
-                <div className="rounded-xl bg-slate-50 p-3 border text-black">8:00 PM – now · OS project</div>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Break Recommendation</div>
-              <div className="text-sm text-black">Take a 5-minute break after this session to maintain focus quality.</div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "5. Reports / Search / Archive",
-      description: "Analytics, keyword search, goal tracking, deletion recovery, and export tooling.",
-      content: (
-        <div className="space-y-6">
-          <div className="grid lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3 bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
-                <div>
-                  <div className="text-xl font-semibold text-black">Weekly Performance Analytics</div>
-                  <div className="text-sm text-black">Focus time grouped by category</div>
-                </div>
-                <div className="flex gap-2 text-sm">
-                  <button className="rounded-xl border px-4 py-2 text-black">Export PDF</button>
-                  <button className="rounded-xl border px-4 py-2 text-black">Export CSV</button>
-                </div>
-              </div>
-              <div className="grid grid-cols-5 gap-4 items-end h-64">
-                {[55, 80, 40, 95, 60].map((h, i) => (
-                  <div key={i} className="flex flex-col items-center gap-2">
-                    <div className="w-full rounded-t-2xl bg-slate-900" style={{ height: `${h * 2}px` }}></div>
-                    <div className="text-xs text-black">{["CS", "Math", "Project", "Reading", "Personal"][i]}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Goal Progress</div>
-              <div className="space-y-4 text-sm">
-                <div>
-                  <div className="flex justify-between mb-1 text-black"><span>Graduate Strong</span><span>72%</span></div>
-                  <div className="h-3 rounded-full bg-slate-100"><div className="h-3 rounded-full bg-slate-900 w-3/4"></div></div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1 text-black"><span>Finish Senior Project</span><span>48%</span></div>
-                  <div className="h-3 rounded-full bg-slate-100"><div className="h-3 rounded-full bg-slate-900 w-1/2"></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Keyword Search</div>
-              <div className="rounded-xl border p-3 text-sm mb-3 text-black">Search tasks, deadlines, notes...</div>
-              <div className="space-y-2 text-sm">
-                <div className="rounded-xl bg-slate-50 border p-3 text-black">"SQL" → SQL Lab 9, SQL Study Guide</div>
-                <div className="rounded-xl bg-slate-50 border p-3 text-black">"Design" → Project 4 Design Milestone</div>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Archive Recovery</div>
-              <div className="space-y-2 text-sm">
-                <div className="rounded-xl border p-3 flex justify-between text-black"><span>Old Physics Notes</span><span className="text-blue-600">Restore</span></div>
-                <div className="rounded-xl border p-3 flex justify-between text-black"><span>Deleted Meeting Block</span><span className="text-blue-600">Restore</span></div>
-              </div>
-              <div className="mt-3 text-xs text-black">Items remain recoverable for 30 days.</div>
-            </div>
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Task History / Versioning</div>
-              <div className="space-y-2 text-sm">
-                <div className="rounded-xl bg-slate-50 border p-3 text-black">Apr 14 · Deadline changed from Apr 15 to Apr 18</div>
-                <div className="rounded-xl bg-slate-50 border p-3 text-black">Apr 13 · Priority changed from 7 to 9</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "6. Notifications / Daily Briefing",
-      description: "Escalating reminders, morning summary, and personalized schedule nudges.",
-      content: (
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-2xl border p-6 shadow-sm">
-            <div className="text-xl font-semibold mb-5 text-black">Daily Morning Briefing</div>
-            <div className="rounded-2xl bg-slate-50 border p-5 text-black">
-              <div className="text-sm text-black">Good morning, John Doe. Here are your top 3 priorities.</div>
-              <div className="space-y-3">
-                {[
-                  "1. Submit Project 4 Design Milestone — due today 11:59 PM",
-                  "2. Review SQL Notebook 8 — estimated 45 minutes",
-                  "3. Team sync at 1:00 PM — editable shared schedule event",
-                ].map((item) => (
-                  <div key={item} className="rounded-xl bg-white border p-3 text-sm text-black">{item}</div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Reminder Escalation</div>
-              <div className="space-y-2 text-sm">
-                <div className="rounded-xl border p-3 text-black">2 hrs before deadline</div>
-                <div className="rounded-xl border p-3 text-black">30 mins before deadline</div>
-                <div className="rounded-xl border p-3 text-black">Marked critical if overdue</div>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border p-5 shadow-sm">
-              <div className="text-lg font-semibold mb-3 text-black">Personalization Settings</div>
-              <div className="space-y-2 text-sm">
-                <div className="rounded-xl bg-slate-50 border p-3 text-black">Peak productivity: 7 PM – 11 PM</div>
-                <div className="rounded-xl bg-slate-50 border p-3 text-black">Reminder style: Push + Email</div>
-                <div className="rounded-xl bg-slate-50 border p-3 text-black">Accessibility mode: Large text enabled</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-  ];
+import { FormEvent, useMemo, useState } from "react";
+
+type TaskStatus = "Not Started" | "In Progress" | "Completed";
+
+type Task = {
+  id: number;
+  title: string;
+  category: string;
+  description: string;
+  date: string;
+  startHour: number;
+  durationMinutes: number;
+  status: TaskStatus;
+  archived: boolean;
+};
+
+type Goal = {
+  id: number;
+  title: string;
+  taskIds: number[];
+};
+
+type Reminder = {
+  id: number;
+  taskId: number;
+  minutesBefore: number;
+};
+
+type SessionState = "idle" | "active" | "break";
+type TempoTab = "Dashboard" | "Active Tasks" | "Archive" | "Reminders" | "Goals" | "Focus" | "Export";
+
+const initialTasks: Task[] = [
+  {
+    id: 1,
+    title: "OS Project Design Milestone",
+    category: "CS4284",
+    description: "Finalize diagrams and report draft",
+    date: "2026-04-27",
+    startHour: 20,
+    durationMinutes: 90,
+    status: "In Progress",
+    archived: false,
+  },
+  {
+    id: 2,
+    title: "Database Homework",
+    category: "CS3114",
+    description: "Complete query optimization section",
+    date: "2026-04-27",
+    startHour: 9,
+    durationMinutes: 60,
+    status: "Not Started",
+    archived: false,
+  },
+  {
+    id: 3,
+    title: "Old Physics Notes Review",
+    category: "PHYS",
+    description: "Review exam notes",
+    date: "2026-04-10",
+    startHour: 18,
+    durationMinutes: 45,
+    status: "Completed",
+    archived: true,
+  },
+  {
+    id: 4,
+    title: "SQL Lab 9",
+    category: "CS3114",
+    description: "Finish indexing section",
+    date: "2026-04-12",
+    startHour: 15,
+    durationMinutes: 50,
+    status: "Completed",
+    archived: true,
+  },
+];
+
+const initialGoals: Goal[] = [
+  { id: 1, title: "Graduate Strong", taskIds: [1, 2, 4] },
+  { id: 2, title: "Finish Senior Project", taskIds: [1] },
+];
+
+export default function TempoDashboard() {
+  const [loggedIn] = useState(true);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [goals, setGoals] = useState<Goal[]>(initialGoals);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [activeQuery, setActiveQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [archiveQuery, setArchiveQuery] = useState("");
+  const [archiveCategory, setArchiveCategory] = useState("All");
+  const [archiveDateFrom, setArchiveDateFrom] = useState("");
+  const [archiveDateTo, setArchiveDateTo] = useState("");
+  const [archiveError, setArchiveError] = useState("");
+  const [agendaFrom, setAgendaFrom] = useState("2026-04-27");
+  const [agendaTo, setAgendaTo] = useState("2026-05-02");
+  const [agendaError, setAgendaError] = useState("");
+  const [selectedTaskForReminder, setSelectedTaskForReminder] = useState(1);
+  const [reminderMinutes, setReminderMinutes] = useState(10);
+  const [reminderError, setReminderError] = useState("");
+  const [newGoalTitle, setNewGoalTitle] = useState("");
+  const [goalTaskSelection, setGoalTaskSelection] = useState<number[]>([]);
+  const [goalError, setGoalError] = useState("");
+  const [sessionDuration, setSessionDuration] = useState(25);
+  const [sessionError, setSessionError] = useState("");
+  const [sessionState, setSessionState] = useState<SessionState>("idle");
+  const [focusTaskId, setFocusTaskId] = useState<number>(1);
+  const [breakMinutes, setBreakMinutes] = useState(5);
+  const [activeTab, setActiveTab] = useState<TempoTab>("Dashboard");
+  const [uiMessage, setUiMessage] = useState("Welcome back. Core Tempo features are active.");
+
+  const nowDate = "2026-04-27";
+  const activeTasks = useMemo(() => tasks.filter((task) => !task.archived), [tasks]);
+  const archivedTasks = useMemo(() => tasks.filter((task) => task.archived), [tasks]);
+
+  const activeTaskResults = useMemo(() => {
+    return activeTasks.filter((task) => {
+      const matchesQuery =
+        task.title.toLowerCase().includes(activeQuery.toLowerCase()) ||
+        task.description.toLowerCase().includes(activeQuery.toLowerCase());
+      const matchesFilter = activeFilter === "All" || task.status === activeFilter;
+      return matchesQuery && matchesFilter;
+    });
+  }, [activeTasks, activeFilter, activeQuery]);
+
+  const archiveResults = useMemo(() => {
+    const from = archiveDateFrom ? new Date(archiveDateFrom).getTime() : undefined;
+    const to = archiveDateTo ? new Date(archiveDateTo).getTime() : undefined;
+    return archivedTasks.filter((task) => {
+      const taskDate = new Date(task.date).getTime();
+      const matchesQuery =
+        task.title.toLowerCase().includes(archiveQuery.toLowerCase()) ||
+        task.category.toLowerCase().includes(archiveQuery.toLowerCase()) ||
+        task.description.toLowerCase().includes(archiveQuery.toLowerCase());
+      const matchesCategory = archiveCategory === "All" || task.category === archiveCategory;
+      const matchesFrom = from === undefined || taskDate >= from;
+      const matchesTo = to === undefined || taskDate <= to;
+      return matchesQuery && matchesCategory && matchesFrom && matchesTo;
+    });
+  }, [archivedTasks, archiveQuery, archiveCategory, archiveDateFrom, archiveDateTo]);
+
+  const focusConflict = useMemo(() => {
+    const selected = tasks.find((task) => task.id === focusTaskId);
+    if (!selected) {
+      return null;
+    }
+    return activeTasks.find(
+      (task) =>
+        task.id !== selected.id &&
+        task.date === selected.date &&
+        task.startHour <= selected.startHour &&
+        task.startHour + task.durationMinutes / 60 > selected.startHour,
+    );
+  }, [activeTasks, focusTaskId, tasks]);
+
+  const goalProgress = useMemo(() => {
+    return goals.map((goal) => {
+      const linked = tasks.filter((task) => goal.taskIds.includes(task.id));
+      const done = linked.filter((task) => task.status === "Completed").length;
+      const percentage = linked.length === 0 ? 0 : Math.round((done / linked.length) * 100);
+      return { goal, percentage };
+    });
+  }, [goals, tasks]);
+
+  const todayItems = useMemo(() => {
+    return activeTasks
+      .filter((task) => task.date === nowDate)
+      .sort((a, b) => a.startHour - b.startHour);
+  }, [activeTasks]);
+
+  const toggleTaskStatus = (taskId: number) => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id !== taskId) {
+          return task;
+        }
+        const next: TaskStatus =
+          task.status === "Not Started"
+            ? "In Progress"
+            : task.status === "In Progress"
+              ? "Completed"
+              : "Not Started";
+        return { ...task, status: next };
+      }),
+    );
+    setUiMessage("Task status updated and synced immediately.");
+  };
+
+  const createReminder = () => {
+    setReminderError("");
+    if (reminderMinutes <= 0) {
+      setReminderError("Reminder time must be a positive number of minutes.");
+      return;
+    }
+    if (reminderMinutes > 1440) {
+      setReminderError("Reminder must be within 24 hours.");
+      return;
+    }
+    const entry: Reminder = {
+      id: Date.now(),
+      taskId: selectedTaskForReminder,
+      minutesBefore: reminderMinutes,
+    };
+    setReminders((prev) => [...prev, entry]);
+    setUiMessage("Reminder scheduled successfully.");
+  };
+
+  const createGoal = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setGoalError("");
+    if (!newGoalTitle.trim()) {
+      setGoalError("Goal title is required.");
+      return;
+    }
+    if (goalTaskSelection.length === 0) {
+      setGoalError("Associate at least one task to track progress.");
+      return;
+    }
+    const goal: Goal = {
+      id: Date.now(),
+      title: newGoalTitle.trim(),
+      taskIds: goalTaskSelection,
+    };
+    setGoals((prev) => [...prev, goal]);
+    setNewGoalTitle("");
+    setGoalTaskSelection([]);
+    setUiMessage("Goal created and linked to selected tasks.");
+  };
+
+  const exportAgenda = () => {
+    setAgendaError("");
+    if (!agendaFrom || !agendaTo || new Date(agendaFrom) > new Date(agendaTo)) {
+      setAgendaError("Please select a valid date range.");
+      return;
+    }
+    const payload = tasks
+      .filter((task) => task.date >= agendaFrom && task.date <= agendaTo)
+      .map(
+        (task) =>
+          `${task.date},${task.title},${task.category},${task.status},${task.durationMinutes} min`,
+      )
+      .join("\n");
+    if (!payload) {
+      setAgendaError("No tasks exist in that date range.");
+      return;
+    }
+    const csvHeader = "Date,Title,Category,Status,Duration\n";
+    const blob = new Blob([csvHeader + payload], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "tempo-agenda-export.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setUiMessage("Agenda exported successfully.");
+  };
+
+  const validateArchiveFilters = () => {
+    setArchiveError("");
+    if (archiveDateFrom && archiveDateTo && new Date(archiveDateFrom) > new Date(archiveDateTo)) {
+      setArchiveError("Invalid date range. Start date must be before end date.");
+      return;
+    }
+    setUiMessage("Archive filter applied.");
+  };
+
+  const startFocusSession = () => {
+    setSessionError("");
+    if (sessionDuration < 10 || sessionDuration > 240) {
+      setSessionError("Duration must be between 10 and 240 minutes.");
+      return;
+    }
+    if (focusConflict) {
+      setSessionError(
+        `Conflict found with ${focusConflict.title}. Adjust time, proceed anyway, or cancel.`,
+      );
+      return;
+    }
+    setSessionState("active");
+    setUiMessage("Focus session started.");
+  };
+
+  const startBreak = () => {
+    if (sessionState !== "active") {
+      return;
+    }
+    setSessionState("break");
+    setUiMessage("Break started. Focus timer paused.");
+  };
+
+  const resumeFocus = () => {
+    if (sessionState !== "break") {
+      return;
+    }
+    if (breakMinutes > 30) {
+      setSessionError("Break extension exceeds current limit.");
+      return;
+    }
+    setSessionState("active");
+    setUiMessage("Break logged and focus resumed.");
+  };
+
+  const stopFocus = () => {
+    setSessionState("idle");
+    setUiMessage("Focus session ended and saved.");
+  };
+
+  if (!loggedIn) {
+    return <main className="p-8">Please log in to continue.</main>;
+  }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6 md:p-10">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-10">
-          <div className="inline-flex px-3 py-1 rounded-full bg-white border text-xs uppercase tracking-widest text-black mb-4">
-            UI Mockups
-          </div>
-          <h1 className="text-4xl font-semibold tracking-tight mb-3 text-black">Tempo Smart Scheduler</h1>
-          <p className="text-black max-w-3xl text-lg">
-            High-fidelity mock UI concepts covering authentication, task scheduling, AI recommendations, focus mode, analytics, notifications, and recovery workflows.
+    <main className="min-h-screen bg-slate-100 p-6 text-black md:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <header className="rounded-2xl border bg-white p-5 shadow-sm">
+          <h1 className="text-3xl font-semibold">Tempo Functional MVP</h1>
+          <p className="mt-2 text-sm text-slate-700">
+            Implemented use-case flows for tasks, archive retrieval, reminders, goals, focus mode,
+            conflict handling, break management, and agenda export.
           </p>
-        </div>
+          <p className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-sm">{uiMessage}</p>
+        </header>
 
-        <div className="space-y-10">
-          {screens.map((screen) => (
-            <section key={screen.title} className="space-y-3">
-              <div>
-                <h2 className="text-2xl font-semibold text-black">{screen.title}</h2>
-                <p className="text-black">{screen.description}</p>
+        <nav className="rounded-2xl border bg-white p-3 shadow-sm">
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                "Dashboard",
+                "Active Tasks",
+                "Archive",
+                "Reminders",
+                "Goals",
+                "Focus",
+                "Export",
+              ] as TempoTab[]
+            ).map((tab) => (
+              <button
+                key={tab}
+                className={`rounded-lg px-3 py-2 text-sm ${
+                  activeTab === tab ? "bg-slate-900 text-white" : "border hover:bg-slate-100"
+                }`}
+                onClick={() => setActiveTab(tab)}
+                type="button"
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        {activeTab === "Dashboard" && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
+              <h2 className="mb-3 text-xl font-semibold">Daily Dashboard (Today)</h2>
+              <div className="space-y-2">
+                {todayItems.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-4 text-sm">
+                    No tasks or sessions scheduled today. Enjoy your free time or get ahead.
+                  </div>
+                ) : (
+                  todayItems.map((task) => (
+                    <div
+                      key={task.id}
+                      className="grid grid-cols-12 items-center gap-2 rounded-lg border p-3 text-sm"
+                    >
+                      <div className="col-span-2 font-medium">{task.startHour}:00</div>
+                      <div className="col-span-4">{task.title}</div>
+                      <div className="col-span-2">{task.category}</div>
+                      <div className="col-span-2">{task.status}</div>
+                      <button
+                        className="col-span-2 rounded-md border px-2 py-1 hover:bg-slate-100"
+                        onClick={() => toggleTaskStatus(task.id)}
+                        type="button"
+                      >
+                        Cycle Status
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
-              {screen.content}
-            </section>
-          ))}
-        </div>
+            </div>
+
+            <div className="rounded-2xl border bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-xl font-semibold">Goals</h2>
+              <div className="space-y-3">
+                {goalProgress.map(({ goal, percentage }) => (
+                  <div key={goal.id}>
+                    <div className="mb-1 flex justify-between text-sm">
+                      <span>{goal.title}</span>
+                      <span>{percentage}%</span>
+                    </div>
+                    <div className="h-2 rounded bg-slate-200">
+                      <div className="h-2 rounded bg-slate-800" style={{ width: `${percentage}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "Active Tasks" && (
+          <section className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
+              <h2 className="mb-3 text-xl font-semibold">Search and Filter Active Tasks</h2>
+              <div className="mb-3 grid gap-2 md:grid-cols-2">
+                <input
+                  className="rounded-lg border p-2 text-sm"
+                  onChange={(event) => setActiveQuery(event.target.value)}
+                  placeholder="Search title or description..."
+                  value={activeQuery}
+                />
+                <select
+                  className="rounded-lg border p-2 text-sm"
+                  onChange={(event) => setActiveFilter(event.target.value)}
+                  value={activeFilter}
+                >
+                  <option>All</option>
+                  <option>Not Started</option>
+                  <option>In Progress</option>
+                  <option>Completed</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                {activeTaskResults.length === 0 ? (
+                  <p className="rounded-lg border border-dashed p-3 text-sm">No matching tasks found.</p>
+                ) : (
+                  activeTaskResults.map((task) => (
+                    <div key={task.id} className="rounded-lg border p-3 text-sm">
+                      <div className="font-medium">{task.title}</div>
+                      <div>
+                        {task.category} - {task.status}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "Archive" && (
+          <section className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
+              <h2 className="mb-3 text-xl font-semibold">Retrieve Archived Tasks</h2>
+              <div className="grid gap-2 md:grid-cols-2">
+                <input
+                  className="rounded-lg border p-2 text-sm"
+                  onBlur={validateArchiveFilters}
+                  onChange={(event) => setArchiveQuery(event.target.value)}
+                  placeholder="Search by name, category, or text..."
+                  value={archiveQuery}
+                />
+                <select
+                  className="rounded-lg border p-2 text-sm"
+                  onChange={(event) => setArchiveCategory(event.target.value)}
+                  value={archiveCategory}
+                >
+                  <option>All</option>
+                  <option>CS4284</option>
+                  <option>CS3114</option>
+                  <option>PHYS</option>
+                </select>
+                <input
+                  className="rounded-lg border p-2 text-sm"
+                  onBlur={validateArchiveFilters}
+                  onChange={(event) => setArchiveDateFrom(event.target.value)}
+                  type="date"
+                  value={archiveDateFrom}
+                />
+                <input
+                  className="rounded-lg border p-2 text-sm"
+                  onBlur={validateArchiveFilters}
+                  onChange={(event) => setArchiveDateTo(event.target.value)}
+                  type="date"
+                  value={archiveDateTo}
+                />
+              </div>
+              {archiveError && <p className="mt-2 text-sm text-red-600">{archiveError}</p>}
+              <div className="mt-3 space-y-2">
+                {archiveResults.length === 0 ? (
+                  <p className="rounded-lg border border-dashed p-3 text-sm">
+                    No archived tasks match your criteria.
+                  </p>
+                ) : (
+                  archiveResults.map((task) => (
+                    <div key={task.id} className="rounded-lg border p-3 text-sm">
+                      <div className="font-medium">{task.title}</div>
+                      <div>
+                        {task.date} - {task.category}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "Reminders" && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
+              <h2 className="mb-3 text-xl font-semibold">Set Reminder</h2>
+              <div className="space-y-2">
+                <select
+                  className="w-full rounded-lg border p-2 text-sm"
+                  onChange={(event) => setSelectedTaskForReminder(Number(event.target.value))}
+                  value={selectedTaskForReminder}
+                >
+                  {activeTasks.map((task) => (
+                    <option key={task.id} value={task.id}>
+                      {task.title}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="w-full rounded-lg border p-2 text-sm"
+                  onChange={(event) => setReminderMinutes(Number(event.target.value))}
+                  value={reminderMinutes}
+                >
+                  <option value={10}>10 minutes before</option>
+                  <option value={60}>1 hour before</option>
+                  <option value={180}>3 hours before</option>
+                </select>
+                <button
+                  className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm text-white"
+                  onClick={createReminder}
+                  type="button"
+                >
+                  Schedule Reminder
+                </button>
+                {reminderError && <p className="text-sm text-red-600">{reminderError}</p>}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-xl font-semibold">Scheduled Reminders</h2>
+              <div className="space-y-1 text-sm">
+                {reminders.length === 0 && (
+                  <p className="rounded border border-dashed p-2">No reminders scheduled yet.</p>
+                )}
+                {reminders.map((reminder) => {
+                  const task = tasks.find((entry) => entry.id === reminder.taskId);
+                  return (
+                    <div key={reminder.id} className="rounded border bg-slate-50 p-2">
+                      {task?.title} - {reminder.minutesBefore} min before
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "Goals" && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
+              <h2 className="mb-3 text-xl font-semibold">Create Goal and Link Tasks</h2>
+              <form className="space-y-3" onSubmit={createGoal}>
+                <input
+                  className="w-full rounded-lg border p-2 text-sm"
+                  onChange={(event) => setNewGoalTitle(event.target.value)}
+                  placeholder="Goal title..."
+                  value={newGoalTitle}
+                />
+                <div className="grid gap-2 md:grid-cols-2">
+                  {activeTasks.map((task) => (
+                    <label key={task.id} className="flex items-center gap-2 rounded border p-2 text-sm">
+                      <input
+                        checked={goalTaskSelection.includes(task.id)}
+                        onChange={(event) =>
+                          setGoalTaskSelection((prev) =>
+                            event.target.checked
+                              ? [...prev, task.id]
+                              : prev.filter((id) => id !== task.id),
+                          )
+                        }
+                        type="checkbox"
+                      />
+                      {task.title}
+                    </label>
+                  ))}
+                </div>
+                <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white" type="submit">
+                  Create Goal
+                </button>
+                {goalError && <p className="text-sm text-red-600">{goalError}</p>}
+              </form>
+            </div>
+
+            <div className="rounded-2xl border bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-xl font-semibold">Goal Progress</h2>
+              <div className="space-y-3">
+                {goalProgress.map(({ goal, percentage }) => (
+                  <div key={goal.id}>
+                    <div className="mb-1 flex justify-between text-sm">
+                      <span>{goal.title}</span>
+                      <span>{percentage}%</span>
+                    </div>
+                    <div className="h-2 rounded bg-slate-200">
+                      <div className="h-2 rounded bg-slate-800" style={{ width: `${percentage}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "Focus" && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-3">
+              <h2 className="mb-3 text-xl font-semibold">Focus Session and Break Management</h2>
+              <div className="grid gap-2 md:grid-cols-3">
+                <select
+                  className="rounded-lg border p-2 text-sm"
+                  onChange={(event) => setFocusTaskId(Number(event.target.value))}
+                  value={focusTaskId}
+                >
+                  {activeTasks.map((task) => (
+                    <option key={task.id} value={task.id}>
+                      {task.title}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="rounded-lg border p-2 text-sm"
+                  max={240}
+                  min={10}
+                  onChange={(event) => setSessionDuration(Number(event.target.value))}
+                  type="number"
+                  value={sessionDuration}
+                />
+                <input
+                  className="rounded-lg border p-2 text-sm"
+                  max={30}
+                  min={1}
+                  onChange={(event) => setBreakMinutes(Number(event.target.value))}
+                  type="number"
+                  value={breakMinutes}
+                />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white"
+                  onClick={startFocusSession}
+                  type="button"
+                >
+                  Start Focus Session
+                </button>
+                <button className="rounded-lg border px-3 py-2 text-sm" onClick={startBreak} type="button">
+                  Start Break
+                </button>
+                <button className="rounded-lg border px-3 py-2 text-sm" onClick={resumeFocus} type="button">
+                  Resume Focus
+                </button>
+                <button className="rounded-lg border px-3 py-2 text-sm" onClick={stopFocus} type="button">
+                  End Session
+                </button>
+              </div>
+              <p className="mt-2 text-sm">Session state: {sessionState}</p>
+              {focusConflict && (
+                <p className="mt-2 rounded bg-amber-100 p-2 text-sm">
+                  Conflict detected with {focusConflict.title}. Choose adjust/proceed/cancel behavior.
+                </p>
+              )}
+              {sessionError && <p className="mt-2 text-sm text-red-600">{sessionError}</p>}
+            </div>
+          </section>
+        )}
+
+        {activeTab === "Export" && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
+              <h2 className="mb-3 text-xl font-semibold">Agenda Export</h2>
+              <div className="space-y-2">
+                <input
+                  className="w-full rounded-lg border p-2 text-sm"
+                  onChange={(event) => setAgendaFrom(event.target.value)}
+                  type="date"
+                  value={agendaFrom}
+                />
+                <input
+                  className="w-full rounded-lg border p-2 text-sm"
+                  onChange={(event) => setAgendaTo(event.target.value)}
+                  type="date"
+                  value={agendaTo}
+                />
+                <button
+                  className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm text-white"
+                  onClick={exportAgenda}
+                  type="button"
+                >
+                  Export Agenda (CSV)
+                </button>
+                {agendaError && <p className="text-sm text-red-600">{agendaError}</p>}
+                <p className="text-xs text-slate-600">Export format can be extended to PDF/print view.</p>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
-    </div>
+    </main>
   );
 }
