@@ -5,6 +5,11 @@ type AppHeaderProps = {
   onOpenMenu: () => void;
 };
 
+
+/**
+ * Displays the top header for our Tempo dashboard, including the menu button,
+ * as well as the app title, and current UI status message.
+ */
 export function AppHeader({ uiMessage, onOpenMenu }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b bg-white">

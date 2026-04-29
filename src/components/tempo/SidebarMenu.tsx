@@ -9,6 +9,7 @@ type SidebarMenuProps = {
   onSelectTab: (tab: TempoTab) => void;
 };
 
+// Displays the slide-out sidebar menu and lets users switch between Tempo feature tabs.
 export function SidebarMenu({ isOpen, tabs, activeTab, onClose, onSelectTab }: SidebarMenuProps) {
   if (!isOpen) {
     return null;

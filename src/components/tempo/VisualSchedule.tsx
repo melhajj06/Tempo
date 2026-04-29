@@ -43,6 +43,7 @@ const DAYS = 7;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_NAMES_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
 
+// Displays the visual schedule with daily, weekly, and monthly calendar views.
 export function VisualSchedule({
   tasks,
   onTaskUpdate,
@@ -77,7 +78,7 @@ export function VisualSchedule({
     | null
   >(null);
 
-  // Get the week dates
+  // Builds the list of dates shown in the weekly calendar view.
   const getWeekDates = useCallback(() => {
     const start = new Date(weekStart);
     const dates: string[] = [];
@@ -89,7 +90,7 @@ export function VisualSchedule({
     return dates;
   }, [weekStart]);
 
-  // Get month dates
+  // Builds the full 6-week date grid used for the monthly calendar view.
   const getMonthDates = useCallback(() => {
     const date = new Date(selectedDate);
     const year = date.getFullYear();
@@ -123,6 +124,7 @@ export function VisualSchedule({
       relevantDates.includes(task.date)
   );
 
+  // Returns Tailwind color classes based on a task's current status.
   const getStatusColor = (status: TaskStatus): string => {
     switch (status) {
       case "Completed":
@@ -136,6 +138,7 @@ export function VisualSchedule({
     }
   };
 
+  // Checks whether a task overlaps with any blocked time on the same date.
   const isTimeBlocked = (date: string, startHour: number, durationHours: number): boolean => {
     return blockedTimes.some((blocked) => {
       if (blocked.date !== date) return false;
@@ -146,10 +149,12 @@ export function VisualSchedule({
     });
   };
 
+  // Returns all blocked time entries for a specific date.
   const getBlockedTimesForDate = (date: string): BlockedTime[] => {
     return blockedTimes.filter((b) => b.date === date);
   };
 
+  // Starts creating a blocked time range when the user clicks on the calendar grid.
   const handleGridPointerDown = (e: React.PointerEvent, dayIndex: number) => {
     if (!blockingMode || !containerRef.current) return;
     const targetDates =
@@ -176,6 +181,7 @@ export function VisualSchedule({
     });
   };
 
+  // Calculates where a task should appear visually on the calendar grid.
   const getTaskPosition = (task: Task, datesArray: string[]) => {
     const dayIndex = datesArray.indexOf(task.date);
     if (dayIndex === -1) return null;
@@ -187,6 +193,7 @@ export function VisualSchedule({
     };
   };
 
+  // Converts mouse coordinates into a calendar date and start hour.
   const getTaskFromCoordinates = (
     clientX: number,
     clientY: number,
@@ -236,6 +243,7 @@ export function VisualSchedule({
     };
   };
 
+  // Starts dragging a task and creates its visual drag preview.
   const handlePointerDownOnTask = (task: Task, e: React.PointerEvent) => {
     e.preventDefault();
     if (!containerRef.current) return;
@@ -271,6 +279,7 @@ export function VisualSchedule({
     });
   };
 
+  // Handles mouse movement while dragging over the calendar.
   const handleMouseMove = (e: React.MouseEvent, maxDayIndex: number) => {
     if (!dragState || !containerRef.current) return;
     const maybe = getTaskFromCoordinates(e.clientX, e.clientY, null, maxDayIndex + 1);
@@ -279,6 +288,7 @@ export function VisualSchedule({
     }
   };
 
+  // Finalizes task movement or blocked time creation when the mouse is released.
   const handleMouseUp = (e: React.MouseEvent, maxDayIndex: number) => {
     if (!dragState || !containerRef.current) return;
 
@@ -365,6 +375,7 @@ export function VisualSchedule({
     }
   };
 
+  // Finalizes dragging or blocking behavior when the pointer is released.
   const handlePointerUp = (e: PointerEvent) => {
     if (blockingState) {
       // finalize blocking across possibly multiple days
@@ -407,7 +418,8 @@ export function VisualSchedule({
     };
   }, [isDragging, blockingState, dragState, dragPreview, viewType, weekDates, monthDates, tasks]);
 
-  // Render weekly view
+
+ // Renders the weekly calendar layout with tasks and blocked times.
   const renderWeeklyView = () => {
     return (
       <div className="overflow-x-auto">
@@ -568,7 +580,7 @@ export function VisualSchedule({
     );
   };
 
-  // Render daily view
+  // Renders the single-day calendar layout.
   const renderDailyView = () => {
     const dayOfWeek = new Date(selectedDate);
     const dayName = DAY_NAMES[dayOfWeek.getDay()];
@@ -699,7 +711,7 @@ export function VisualSchedule({
     );
   };
 
-  // Render monthly view
+ // Renders the monthly calendar grid.
   const renderMonthlyView = () => {
     const date = new Date(selectedDate);
     const monthName = date.toLocaleString("default", { month: "long", year: "numeric" });
@@ -874,6 +886,7 @@ interface TaskBlockProps {
   getStatusColor: (status: TaskStatus) => string;
 }
 
+// Displays a draggable task block inside the calendar grid.
 function TaskBlock({
   task,
   position,

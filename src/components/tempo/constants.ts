@@ -1,5 +1,6 @@
 import { Goal, Task, TempoTab } from "./types";
 
+// Defines the main navigation tabs used throughout the Tempo dashboard.
 export const tempoTabs: TempoTab[] = [
   "Dashboard",
   "Active Tasks",
@@ -10,6 +11,7 @@ export const tempoTabs: TempoTab[] = [
   "Export",
 ];
 
+// Provides starter task data for the app before any user-created tasks are added.
 export const initialTasks: Task[] = [
   {
     id: 1,
@@ -65,6 +67,7 @@ export const initialTasks: Task[] = [
   },
 ];
 
+// Provides starter goal data and links each goal to related task IDs.
 export const initialGoals: Goal[] = [
   { id: 1, title: "Graduate Strong", taskIds: [1, 2, 4] },
   { id: 2, title: "Finish Senior Project", taskIds: [1] },
