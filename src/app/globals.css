@@ -1,12 +1,18 @@
 @import "tailwindcss";
 
-/* Sets the default light mode background and text colors. */
+/* Tempo, Notion-style readability: soft canvas + near-black ink, consistent in light UI. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --tempo-canvas: #f7f6f3;
+  --tempo-surface: #fdfcfa;
+  --tempo-muted: #f1f0ec;
+  --tempo-ink: #1a1a1a;
+  --tempo-muted-foreground: #5c5c5c;
+  --tempo-border: #e6e4df;
+  --tempo-ring: #b4b4b4;
+  --background: var(--tempo-canvas);
+  --foreground: var(--tempo-ink);
 }
 
-/* Connects custom CSS variables to Tailwind theme values. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -14,18 +20,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Updates the app colors automatically when the system is in dark mode. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-
-/* Applies the global background, text color, and default font. */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--tempo-canvas);
+  color: var(--tempo-ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }

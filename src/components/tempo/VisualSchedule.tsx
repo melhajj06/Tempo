@@ -1,7 +1,25 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { categoryBlockClasses } from "./constants";
 import { Task, TaskStatus, BlockedTime } from "./types";
+
+function statusAccent(status: TaskStatus): string {
+  switch (status) {
+    case "Completed":
+      return "border-l-emerald-600";
+    case "In Progress":
+      return "border-l-sky-600";
+    case "Not Started":
+      return "border-l-amber-500";
+    default:
+      return "border-l-neutral-400";
+  }
+}
+
+function taskBlockClasses(task: Task): string {
+  return `${categoryBlockClasses(task.category)} ${statusAccent(task.status)} border-l-4`;
+}
 
 export type CalendarViewType = "daily" | "weekly" | "monthly";
 
@@ -123,20 +141,6 @@ export function VisualSchedule({
       !task.archived &&
       relevantDates.includes(task.date)
   );
-
-  // Returns Tailwind color classes based on a task's current status.
-  const getStatusColor = (status: TaskStatus): string => {
-    switch (status) {
-      case "Completed":
-        return "bg-green-100 border-green-300 text-green-900";
-      case "In Progress":
-        return "bg-blue-100 border-blue-300 text-blue-900";
-      case "Not Started":
-        return "bg-amber-100 border-amber-300 text-amber-900";
-      default:
-        return "bg-gray-100 border-gray-300 text-gray-900";
-    }
-  };
 
   // Checks whether a task overlaps with any blocked time on the same date.
   const isTimeBlocked = (date: string, startHour: number, durationHours: number): boolean => {
@@ -519,7 +523,6 @@ export function VisualSchedule({
                           onHover={() => setHoveredTask(task.id)}
                           onUnhover={() => setHoveredTask(null)}
                           onPointerDown={(e) => handlePointerDownOnTask(task, e)}
-                          getStatusColor={getStatusColor}
                         />
                       );
                     })}
@@ -672,7 +675,6 @@ export function VisualSchedule({
                       onHover={() => setHoveredTask(task.id)}
                       onUnhover={() => setHoveredTask(null)}
                       onPointerDown={(e) => handlePointerDownOnTask(task, e)}
-                      getStatusColor={getStatusColor}
                     />
                   );
                 })}
@@ -767,9 +769,7 @@ export function VisualSchedule({
                   {dayTasks.slice(0, 2).map((task) => (
                     <div
                       key={`task-${task.id}`}
-                      className={`p-1 rounded text-xs truncate cursor-move ${getStatusColor(
-                        task.status
-                      )}`}
+                      className={`p-1 text-xs truncate cursor-move rounded border ${taskBlockClasses(task)}`}
                       title={task.title}
                       onPointerDown={(e) => handlePointerDownOnTask(task, e)}
                     >
@@ -789,7 +789,7 @@ export function VisualSchedule({
   };
 
   return (
-    <div className="w-full rounded-2xl border bg-white p-5 shadow-sm">
+    <div className="w-full rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm">
       <div className="mb-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Visual Schedule</h2>
@@ -883,7 +883,6 @@ interface TaskBlockProps {
   onHover: () => void;
   onUnhover: () => void;
   onPointerDown: (e: React.PointerEvent) => void;
-  getStatusColor: (status: TaskStatus) => string;
 }
 
 // Displays a draggable task block inside the calendar grid.
@@ -895,12 +894,11 @@ function TaskBlock({
   onHover,
   onUnhover,
   onPointerDown,
-  getStatusColor,
 }: TaskBlockProps) {
   return (
     <div
-      className={`absolute left-1 right-1 rounded border-l-4 p-2 text-xs cursor-move overflow-hidden transition-all ${getStatusColor(
-        task.status
+      className={`absolute left-1 right-1 rounded p-2 text-xs cursor-move overflow-hidden transition-all border ${taskBlockClasses(
+        task
       )} ${isDragging ? "opacity-75 z-20 shadow-lg border-t-2" : "z-10"}`}
       style={{
         top: `${position.top}px`,

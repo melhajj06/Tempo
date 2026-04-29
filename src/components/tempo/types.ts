@@ -1,15 +1,22 @@
 // Represents the possible progress states for a task.
 export type TaskStatus = "Not Started" | "In Progress" | "Completed";
 
+/** Subjective importance (1 = lowest, 5 = highest) used by the dynamic weighting engine. */
+export type SubjectivePriority = 1 | 2 | 3 | 4 | 5;
+
 // Defines the structure for a task in the Tempo scheduler.
 export type Task = {
   id: number;
   title: string;
   category: string;
   description: string;
+  /** Calendar day this block is scheduled on. */
   date: string;
   startHour: number;
   durationMinutes: number;
+  /** Due date (YYYY-MM-DD); drives deadline proximity in weighting. */
+  deadline: string;
+  subjectivePriority: SubjectivePriority;
   status: TaskStatus;
   archived: boolean;
   archivedAt: string | null;

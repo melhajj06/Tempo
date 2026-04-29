@@ -2,14 +2,21 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { AppHeader } from "../components/tempo/AppHeader";
+import { DeepFocusMode } from "../components/tempo/DeepFocusMode";
 import { SidebarMenu } from "../components/tempo/SidebarMenu";
+import { TempoAI } from "../components/tempo/TempoAI";
+import { TaskFormCard } from "../components/tempo/TaskFormCard";
 import { VisualSchedule } from "../components/tempo/VisualSchedule";
-import { initialGoals, initialTasks, tempoTabs } from "../components/tempo/constants";
-import { CalendarViewType } from "../components/tempo/VisualSchedule";
+import { categoryBlockClasses, initialGoals, initialTasks, tempoTabs } from "../components/tempo/constants";
+import type { CalendarViewType } from "../components/tempo/VisualSchedule";
 import { BlockedTime, Goal, Reminder, SessionState, Task, TaskStatus, TempoTab } from "../components/tempo/types";
-
+import type { TaskFormPayload } from "../components/tempo/TaskFormCard";
+import { rankTasksByWeight, computeWeightScore } from "@/lib/tempo/weightingEngine";
+import { findScheduleConflicts } from "@/lib/tempo/scheduleConflicts";
+import { serializeTempoAiContext } from "@/lib/tempo/tempoAiContext";
+import { useAuth } from "@/contexts/auth-context";
 export default function TempoDashboard() {
-  const [loggedIn] = useState(true);
+  const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [goals, setGoals] = useState<Goal[]>(initialGoals);
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -48,10 +55,46 @@ export default function TempoDashboard() {
   const [blockingMode, setBlockingMode] = useState(false);
   const [blockingStartHour, setBlockingStartHour] = useState<number | null>(null);
   const [blockingReason, setBlockingReason] = useState("Meeting");
+  const [editTarget, setEditTarget] = useState<Task | null>(null);
+  const [deepFocusOpen, setDeepFocusOpen] = useState(false);
 
   const nowDate = "2026-04-27";
   const activeTasks = useMemo(() => tasks.filter((task) => !task.archived), [tasks]);
   const archivedTasks = useMemo(() => tasks.filter((task) => task.archived), [tasks]);
+
+  const rankedTasks = useMemo(() => rankTasksByWeight(tasks), [tasks]);
+
+  const scheduleConflicts = useMemo(() => findScheduleConflicts(tasks), [tasks]);
+
+  const tempoAiContext = useMemo(
+    () =>
+      serializeTempoAiContext({
+        nowDate,
+        weekStartDate,
+        calendarViewType,
+        activeTasks,
+        archivedTasks,
+        rankedTasks,
+        blockedTimes,
+        reminders,
+        goals,
+        allTasksForLookup: tasks,
+        scheduleConflicts,
+      }),
+    [
+      nowDate,
+      weekStartDate,
+      calendarViewType,
+      activeTasks,
+      archivedTasks,
+      rankedTasks,
+      blockedTimes,
+      reminders,
+      goals,
+      tasks,
+      scheduleConflicts,
+    ],
+  );
 
   const activeTaskResults = useMemo(() => {
     return activeTasks.filter((task) => {
@@ -124,7 +167,12 @@ export default function TempoDashboard() {
     return activeTasks
       .filter((task) => task.date === nowDate)
       .sort((a, b) => a.startHour - b.startHour);
-  }, [activeTasks]);
+  }, [activeTasks, nowDate]);
+
+  const deepFocusSubject = useMemo(
+    () => activeTasks.find((t) => t.id === focusTaskId) ?? activeTasks[0] ?? null,
+    [activeTasks, focusTaskId],
+  );
 
   const handleTaskTimeUpdate = (taskId: number, startHour: number, newDate: string) => {
     setTasks((prev) =>
@@ -160,6 +208,50 @@ export default function TempoDashboard() {
   const removeBlockedTime = (blockedId: number) => {
     setBlockedTimes((prev) => prev.filter((b) => b.id !== blockedId));
     setUiMessage("Blocked time removed.");
+  };
+
+  const handleCreateTask = (payload: TaskFormPayload) => {
+    const id = Date.now();
+    const next: Task = {
+      id,
+      title: payload.title,
+      description: payload.description,
+      category: payload.category,
+      date: payload.date,
+      startHour: payload.startHour,
+      durationMinutes: payload.durationMinutes,
+      deadline: payload.deadline,
+      subjectivePriority: payload.subjectivePriority,
+      status: payload.status,
+      archived: false,
+      archivedAt: null,
+      archiveReason: null,
+    };
+    setTasks((prev) => [...prev, next]);
+    setUiMessage("Task added. It is ranked using the dynamic weighting engine.");
+  };
+
+  const handleUpdateTask = (taskId: number, payload: TaskFormPayload) => {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              title: payload.title,
+              description: payload.description,
+              category: payload.category,
+              date: payload.date,
+              startHour: payload.startHour,
+              durationMinutes: payload.durationMinutes,
+              deadline: payload.deadline,
+              subjectivePriority: payload.subjectivePriority,
+              status: payload.status,
+            }
+          : t,
+      ),
+    );
+    setEditTarget(null);
+    setUiMessage("Task saved. Weighting updated.");
   };
 
   const toggleTaskStatus = (taskId: number) => {
@@ -356,13 +448,42 @@ export default function TempoDashboard() {
     setUiMessage("Focus session ended and saved.");
   };
 
-  if (!loggedIn) {
-    return <main className="p-8">Please log in to continue.</main>;
+  if (authLoading) {
+    return (
+      <main className="min-h-screen bg-[var(--tempo-canvas)] text-[var(--tempo-ink)]">
+        <AppHeader onOpenMenu={() => {}} showMenu={false} uiMessage="Loading session…" />
+        <div className="flex min-h-[45vh] items-center justify-center px-4 text-sm text-[var(--tempo-muted-foreground)]">
+          Loading…
+        </div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-[var(--tempo-canvas)] text-[var(--tempo-ink)]">
+        <AppHeader onOpenMenu={() => {}} showMenu={false} uiMessage="Sign in to use Tempo." />
+        <div className="mx-auto max-w-md px-6 py-20 text-center">
+          <p className="text-xl font-semibold tracking-tight">Welcome to Tempo</p>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--tempo-muted-foreground)]">
+            Use <span className="font-medium text-[var(--tempo-ink)]">Sign in</span> in the top right to continue with Google or email.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 text-black">
-      <AppHeader onOpenMenu={() => setIsMenuOpen(true)} uiMessage={uiMessage} />
+    <main className="min-h-screen bg-[var(--tempo-canvas)] text-[var(--tempo-ink)]">
+      <AppHeader
+        onOpenMenu={() => setIsMenuOpen(true)}
+        primaryAction={{
+          label: "Deep focus",
+          onClick: () => setDeepFocusOpen(true),
+          disabled: !deepFocusSubject,
+        }}
+        uiMessage={uiMessage}
+      />
       <SidebarMenu
         activeTab={activeTab}
         isOpen={isMenuOpen}
@@ -377,34 +498,106 @@ export default function TempoDashboard() {
       <div className="mx-auto max-w-7xl space-y-6 p-6 md:p-8">
         {activeTab === "Dashboard" && (
           <section className="space-y-6">
+            {scheduleConflicts.length > 0 && (
+              <div
+                className="rounded-xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950"
+                role="status"
+              >
+                <p className="font-medium">Schedule overlap detected</p>
+                <ul className="mt-2 list-inside list-disc space-y-1 text-amber-900/90">
+                  {scheduleConflicts.map(({ a, b }) => (
+                    <li key={`${a.id}-${b.id}`}>
+                      &ldquo;{a.title}&rdquo; overlaps with &ldquo;{b.title}&rdquo; on {a.date}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="grid gap-6 lg:grid-cols-3">
-              {/* Left side: Daily Dashboard and Goals */}
-              <div className="lg:col-span-1 space-y-6">
-                <div className="rounded-2xl border bg-white p-5 shadow-sm">
-                  <h2 className="mb-3 text-xl font-semibold">Daily Dashboard (Today)</h2>
+              <div className="space-y-6 lg:col-span-1">
+                <TaskFormCard
+                  defaultScheduledDate={nowDate}
+                  editingTask={editTarget}
+                  onCreate={handleCreateTask}
+                  onDiscardEdit={() => setEditTarget(null)}
+                  onUpdate={handleUpdateTask}
+                />
+
+                <TempoAI context={tempoAiContext} />
+
+                <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm">
+                  <h2 className="mb-1 text-xl font-semibold tracking-tight text-[var(--tempo-ink)]">
+                    Weighted queue
+                  </h2>
+                  <p className="mb-3 text-xs text-[var(--tempo-muted-foreground)]">
+                    Rank combines deadline urgency and your priority ({new Date(nowDate).getFullYear()} reference).
+                  </p>
+                  <div className="space-y-2">
+                    {rankedTasks.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-[var(--tempo-border)] p-4 text-sm text-[var(--tempo-muted-foreground)]">
+                        No active tasks. Add one above or restore from Archive.
+                      </div>
+                    ) : (
+                      rankedTasks.map((task, i) => {
+                        const score = computeWeightScore(task, new Date(`${nowDate}T12:00:00`));
+                        return (
+                          <div
+                            key={task.id}
+                            className={`flex gap-3 rounded-lg border border-[var(--tempo-border)] p-3 text-sm`}
+                          >
+                            <span className="w-6 shrink-0 pt-0.5 text-xs text-[var(--tempo-muted-foreground)]">{i + 1}</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-start justify-between gap-2">
+                                <div className="font-medium leading-snug">{task.title}</div>
+                                <button
+                                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${categoryBlockClasses(task.category)}`}
+                                  onClick={() => setEditTarget(task)}
+                                  type="button"
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--tempo-muted-foreground)]">
+                                <span>Due {task.deadline}</span>
+                                <span>P{task.subjectivePriority}</span>
+                                <span>Score {score.toFixed(1)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm">
+                  <h2 className="mb-3 text-xl font-semibold tracking-tight">Today</h2>
                   <div className="space-y-2">
                     {todayItems.length === 0 ? (
-                      <div className="rounded-lg border border-dashed p-4 text-sm">
-                        No tasks or sessions scheduled today. Enjoy your free time or get ahead.
+                      <div className="rounded-lg border border-dashed border-[var(--tempo-border)] p-4 text-sm text-[var(--tempo-muted-foreground)]">
+                        No sessions today.
                       </div>
                     ) : (
                       todayItems.map((task) => (
                         <div
                           key={task.id}
-                          className="rounded-lg border p-3 text-sm space-y-2"
+                          className="space-y-2 rounded-lg border border-[var(--tempo-border)] p-3 text-sm"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="font-medium">{task.startHour}:00</div>
                             <div className="flex-1">{task.title}</div>
                           </div>
                           <div className="flex items-center justify-between gap-2">
-                            <div className="text-xs text-slate-600">{task.category} • {task.status}</div>
+                            <div className="text-xs text-[var(--tempo-muted-foreground)]">
+                              {task.category} • {task.status}
+                            </div>
                             <button
-                              className="rounded-md border px-2 py-1 text-xs hover:bg-slate-100 whitespace-nowrap"
+                              className="whitespace-nowrap rounded-md border border-[var(--tempo-border)] px-2 py-1 text-xs hover:bg-[var(--tempo-muted)]"
                               onClick={() => toggleTaskStatus(task.id)}
                               type="button"
                             >
-                              Cycle Status
+                              Cycle status
                             </button>
                           </div>
                         </div>
@@ -413,8 +606,8 @@ export default function TempoDashboard() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border bg-white p-5 shadow-sm">
-                  <h2 className="mb-3 text-xl font-semibold">Goals</h2>
+                <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm">
+                  <h2 className="mb-3 text-xl font-semibold tracking-tight">Goals</h2>
                   <div className="space-y-3">
                     {goalProgress.map(({ goal, percentage }) => (
                       <div key={goal.id}>
@@ -422,8 +615,11 @@ export default function TempoDashboard() {
                           <span>{goal.title}</span>
                           <span>{percentage}%</span>
                         </div>
-                        <div className="h-2 rounded bg-slate-200">
-                          <div className="h-2 rounded bg-slate-800" style={{ width: `${percentage}%` }} />
+                        <div className="h-2 rounded bg-[var(--tempo-muted)]">
+                          <div
+                            className="h-2 rounded bg-[var(--tempo-ink)]"
+                            style={{ width: `${percentage}%` }}
+                          />
                         </div>
                       </div>
                     ))}
@@ -431,7 +627,6 @@ export default function TempoDashboard() {
                 </div>
               </div>
 
-              {/* Right side: Visual Schedule */}
               <div className="lg:col-span-2">
                 <VisualSchedule
                   tasks={tasks}
@@ -748,8 +943,18 @@ export default function TempoDashboard() {
 
         {activeTab === "Focus" && (
           <section className="grid gap-6 lg:grid-cols-3">
-            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-3">
-              <h2 className="mb-3 text-xl font-semibold">Focus Session and Break Management</h2>
+            <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm lg:col-span-3">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <h2 className="text-xl font-semibold">Focus session</h2>
+                <button
+                  className="rounded-lg bg-[var(--tempo-ink)] px-4 py-2 text-sm font-medium text-[var(--tempo-surface)] disabled:opacity-40"
+                  disabled={!deepFocusSubject}
+                  onClick={() => setDeepFocusOpen(true)}
+                  type="button"
+                >
+                  Enter Deep Focus
+                </button>
+              </div>
               <div className="grid gap-2 md:grid-cols-3">
                 <select
                   className="rounded-lg border p-2 text-sm"
@@ -839,6 +1044,8 @@ export default function TempoDashboard() {
           </section>
         )}
       </div>
+
+      <DeepFocusMode onClose={() => setDeepFocusOpen(false)} open={deepFocusOpen} task={deepFocusSubject} />
     </main>
   );
 }

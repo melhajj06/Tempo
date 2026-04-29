@@ -1,5 +1,16 @@
 import { Goal, Task, TempoTab } from "./types";
 
+/** Tailwind class sets for agenda blocks by course/category (pastel red / blue / green / yellow). */
+export function categoryBlockClasses(category: string): string {
+  const c = category.toUpperCase();
+  if (c.includes("4284") || c.includes("OS"))
+    return "bg-[#ffd6d6] border-[#f5a8a8] text-[#5c2020]";
+  if (c.includes("3114") || c.includes("DATA") || c.includes("SQL"))
+    return "bg-[#cfe8ff] border-[#9dc4f0] text-[#143a5c]";
+  if (c.includes("PHYS")) return "bg-[#d4f4dd] border-[#9dd4ae] text-[#1e4d2b]";
+  return "bg-[#fff3c4] border-[#e8d58a] text-[#5c4a14]";
+}
+
 // Defines the main navigation tabs used throughout the Tempo dashboard.
 export const tempoTabs: TempoTab[] = [
   "Dashboard",
@@ -21,6 +32,8 @@ export const initialTasks: Task[] = [
     date: "2026-04-27",
     startHour: 20,
     durationMinutes: 90,
+    deadline: "2026-04-29",
+    subjectivePriority: 5,
     status: "In Progress",
     archived: false,
     archivedAt: null,
@@ -34,6 +47,8 @@ export const initialTasks: Task[] = [
     date: "2026-04-27",
     startHour: 9,
     durationMinutes: 60,
+    deadline: "2026-04-28",
+    subjectivePriority: 4,
     status: "Not Started",
     archived: false,
     archivedAt: null,
@@ -47,6 +62,8 @@ export const initialTasks: Task[] = [
     date: "2026-04-10",
     startHour: 18,
     durationMinutes: 45,
+    deadline: "2026-04-10",
+    subjectivePriority: 2,
     status: "Completed",
     archived: true,
     archivedAt: "2026-04-15T10:00:00.000Z",
@@ -60,6 +77,8 @@ export const initialTasks: Task[] = [
     date: "2026-04-12",
     startHour: 15,
     durationMinutes: 50,
+    deadline: "2026-04-12",
+    subjectivePriority: 3,
     status: "Completed",
     archived: true,
     archivedAt: "2026-04-20T12:00:00.000Z",
