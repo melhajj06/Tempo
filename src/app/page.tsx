@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { AppHeader } from "../components/tempo/AppHeader";
 import { DeepFocusMode } from "../components/tempo/DeepFocusMode";
 import { LandingGate } from "../components/tempo/LandingGate";
@@ -9,9 +9,17 @@ import { TempoAI } from "../components/tempo/TempoAI";
 import { StickyNoteBoard } from "../components/tempo/StickyNoteBoard";
 import { TaskFormCard } from "../components/tempo/TaskFormCard";
 import { VisualSchedule } from "../components/tempo/VisualSchedule";
-import { categoryBlockClasses, initialStickyNotes, initialTasks, tempoTabs } from "../components/tempo/constants";
+import { categoryBlockClasses, initialGoals, initialStickyNotes, initialTasks, tempoTabs } from "../components/tempo/constants";
 import type { CalendarViewType } from "../components/tempo/VisualSchedule";
-import { BlockedTime, Reminder, StickyNote, Task, TaskStatus, TempoTab } from "../components/tempo/types";
+import {
+  BlockedTime,
+  Goal,
+  Reminder,
+  StickyNote,
+  Task,
+  TaskStatus,
+  TempoTab,
+} from "../components/tempo/types";
 import type { TaskFormPayload } from "../components/tempo/TaskFormCard";
 import { rankTasksByWeight, computeWeightScore } from "@/lib/tempo/weightingEngine";
 import { findScheduleConflicts } from "@/lib/tempo/scheduleConflicts";
@@ -21,6 +29,7 @@ export default function TempoDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>(initialStickyNotes);
+  const [goals, setGoals] = useState<Goal[]>(initialGoals);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [activeQuery, setActiveQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
@@ -39,6 +48,10 @@ export default function TempoDashboard() {
   const [selectedTaskForReminder, setSelectedTaskForReminder] = useState(1);
   const [reminderMinutes, setReminderMinutes] = useState(10);
   const [reminderError, setReminderError] = useState("");
+  const [newGoalTitle, setNewGoalTitle] = useState("");
+  const [goalTaskSelection, setGoalTaskSelection] = useState<number[]>([]);
+  const [goalError, setGoalError] = useState("");
+  const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
   const [focusTaskId, setFocusTaskId] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<TempoTab>("Dashboard");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -72,6 +85,7 @@ export default function TempoDashboard() {
         rankedTasks,
         blockedTimes,
         reminders,
+        goals,
         stickyNotes,
         allTasksForLookup: tasks,
         scheduleConflicts,
@@ -85,6 +99,7 @@ export default function TempoDashboard() {
       rankedTasks,
       blockedTimes,
       reminders,
+      goals,
       stickyNotes,
       tasks,
       scheduleConflicts,
@@ -140,6 +155,15 @@ export default function TempoDashboard() {
       .filter((task) => task.date === nowDate)
       .sort((a, b) => a.startHour - b.startHour);
   }, [activeTasks, nowDate]);
+
+  const goalProgress = useMemo(() => {
+    return goals.map((goal) => {
+      const linked = tasks.filter((task) => goal.taskIds.includes(task.id));
+      const done = linked.filter((task) => task.status === "Completed").length;
+      const percentage = linked.length === 0 ? 0 : Math.round((done / linked.length) * 100);
+      return { goal, percentage };
+    });
+  }, [goals, tasks]);
 
   const deepFocusSubject = useMemo(
     () => activeTasks.find((t) => t.id === focusTaskId) ?? activeTasks[0] ?? null,
@@ -263,6 +287,64 @@ export default function TempoDashboard() {
     setUiMessage("Reminder scheduled successfully.");
   };
 
+  const resetGoalDraft = () => {
+    setEditingGoalId(null);
+    setNewGoalTitle("");
+    setGoalTaskSelection([]);
+    setGoalError("");
+  };
+
+  const startEditGoal = (goal: Goal, options?: { goToGoalsTab?: boolean }) => {
+    if (options?.goToGoalsTab) {
+      setActiveTab("Goals");
+    }
+    setEditingGoalId(goal.id);
+    setNewGoalTitle(goal.title);
+    setGoalTaskSelection([...goal.taskIds]);
+    setGoalError("");
+  };
+
+  const removeGoal = (goalId: number) => {
+    setGoals((prev) => prev.filter((g) => g.id !== goalId));
+    if (editingGoalId === goalId) {
+      resetGoalDraft();
+    }
+    setUiMessage("Goal removed.");
+  };
+
+  const submitGoal = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setGoalError("");
+    if (!newGoalTitle.trim()) {
+      setGoalError("Goal title is required.");
+      return;
+    }
+    if (goalTaskSelection.length === 0) {
+      setGoalError("Associate at least one task to track progress.");
+      return;
+    }
+    if (editingGoalId !== null) {
+      setGoals((prev) =>
+        prev.map((g) =>
+          g.id === editingGoalId
+            ? { ...g, title: newGoalTitle.trim(), taskIds: [...goalTaskSelection] }
+            : g,
+        ),
+      );
+      resetGoalDraft();
+      setUiMessage("Goal updated.");
+      return;
+    }
+    const goal: Goal = {
+      id: Date.now(),
+      title: newGoalTitle.trim(),
+      taskIds: goalTaskSelection,
+    };
+    setGoals((prev) => [...prev, goal]);
+    resetGoalDraft();
+    setUiMessage("Goal created and linked to selected tasks.");
+  };
+
   const updateStickyNote = (
     id: number,
     patch: Partial<Pick<StickyNote, "x" | "y" | "text">>,
@@ -370,6 +452,12 @@ export default function TempoDashboard() {
     setArchiveActionPendingTaskId(taskId);
     window.setTimeout(() => {
       setTasks((prev) => prev.filter((task) => task.id !== taskId));
+      setGoals((prev) =>
+        prev.map((goal) => ({
+          ...goal,
+          taskIds: goal.taskIds.filter((goalTaskId) => goalTaskId !== taskId),
+        })),
+      );
       setReminders((prev) => prev.filter((reminder) => reminder.taskId !== taskId));
       setArchiveActionPendingTaskId(null);
       setUiMessage("Archived task permanently deleted.");
@@ -537,6 +625,46 @@ export default function TempoDashboard() {
                       ))
                     )}
                   </div>
+                </div>
+
+                <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm">
+                  <h2 className="mb-3 text-xl font-semibold tracking-tight">Goals</h2>
+                  {goalProgress.length === 0 ? (
+                    <p className="text-sm text-[var(--tempo-muted-foreground)]">No goals yet. Open Goals in the sidebar to add one.</p>
+                  ) : (
+                  <div className="space-y-3">
+                    {goalProgress.map(({ goal, percentage }) => (
+                      <div key={goal.id}>
+                        <div className="mb-1 flex items-start justify-between gap-2 text-sm">
+                          <span className="min-w-0 flex-1 font-medium leading-snug">{goal.title}</span>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <span className="tabular-nums">{percentage}%</span>
+                            <button
+                              className="rounded-md border border-[var(--tempo-border)] px-2 py-0.5 text-xs hover:bg-[var(--tempo-muted)]"
+                              onClick={() => startEditGoal(goal, { goToGoalsTab: true })}
+                              type="button"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="rounded-md border border-red-200 px-2 py-0.5 text-xs text-red-700 hover:bg-red-50"
+                              onClick={() => removeGoal(goal.id)}
+                              type="button"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                        <div className="h-2 rounded bg-[var(--tempo-muted)]">
+                          <div
+                            className="h-2 rounded bg-[var(--tempo-ink)]"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  )}
                 </div>
 
                 <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm">
@@ -810,16 +938,91 @@ export default function TempoDashboard() {
           </section>
         )}
 
-        {activeTab === "Sticky Notes" && (
-          <section className="grid gap-6 lg:grid-cols-1">
-            <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-6 shadow-sm">
-              <h2 className="mb-5 text-xl font-semibold tracking-tight text-[var(--tempo-ink)]">Sticky notes</h2>
-              <StickyNoteBoard
-                notes={stickyNotes}
-                onAddNote={addStickyNote}
-                onRemoveNote={removeStickyNote}
-                onUpdateNote={updateStickyNote}
-              />
+        {activeTab === "Goals" && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
+              <h2 className="mb-1 text-xl font-semibold">
+                {editingGoalId !== null ? "Edit goal" : "Create goal and link tasks"}
+              </h2>
+              {editingGoalId !== null && (
+                <p className="mb-3 text-sm text-slate-600">Change the title or linked tasks, then save.</p>
+              )}
+              <form className="space-y-3" onSubmit={submitGoal}>
+                <input
+                  className="w-full rounded-lg border p-2 text-sm"
+                  onChange={(event) => setNewGoalTitle(event.target.value)}
+                  placeholder="Goal title..."
+                  value={newGoalTitle}
+                />
+                <div className="grid gap-2 md:grid-cols-2">
+                  {activeTasks.map((task) => (
+                    <label key={task.id} className="flex items-center gap-2 rounded border p-2 text-sm">
+                      <input
+                        checked={goalTaskSelection.includes(task.id)}
+                        onChange={(event) =>
+                          setGoalTaskSelection((prev) =>
+                            event.target.checked ? [...prev, task.id] : prev.filter((id) => id !== task.id),
+                          )
+                        }
+                        type="checkbox"
+                      />
+                      {task.title}
+                    </label>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white" type="submit">
+                    {editingGoalId !== null ? "Save changes" : "Create goal"}
+                  </button>
+                  {editingGoalId !== null && (
+                    <button
+                      className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+                      onClick={() => resetGoalDraft()}
+                      type="button"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+                {goalError && <p className="text-sm text-red-600">{goalError}</p>}
+              </form>
+            </div>
+
+            <div className="rounded-2xl border bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-xl font-semibold">Goal progress</h2>
+              {goalProgress.length === 0 ? (
+                <p className="text-sm text-slate-600">No goals yet.</p>
+              ) : (
+              <div className="space-y-3">
+                {goalProgress.map(({ goal, percentage }) => (
+                  <div key={goal.id}>
+                    <div className="mb-1 flex items-start justify-between gap-2 text-sm">
+                      <span className="min-w-0 flex-1 font-medium">{goal.title}</span>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <span className="tabular-nums">{percentage}%</span>
+                        <button
+                          className="rounded-md border px-2 py-0.5 text-xs hover:bg-slate-50"
+                          onClick={() => startEditGoal(goal)}
+                          type="button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="rounded-md border border-red-200 px-2 py-0.5 text-xs text-red-700 hover:bg-red-50"
+                          onClick={() => removeGoal(goal.id)}
+                          type="button"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                    <div className="h-2 rounded bg-slate-200">
+                      <div className="h-2 rounded bg-slate-800" style={{ width: `${percentage}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              )}
             </div>
           </section>
         )}

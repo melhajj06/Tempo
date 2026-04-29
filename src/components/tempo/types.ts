@@ -41,6 +41,13 @@ export type StickyNote = {
   y: number;
 };
 
+/** Goal with linked tasks for progress tracking. */
+export type Goal = {
+  id: number;
+  title: string;
+  taskIds: number[];
+};
+
 // Defines a reminder linked to a specific task.
 export type Reminder = {
   id: number;
@@ -54,6 +61,6 @@ export type TempoTab =
   | "Active Tasks"
   | "Archive"
   | "Reminders"
-  | "Sticky Notes"
+  | "Goals"
   | "Focus"
   | "Export";

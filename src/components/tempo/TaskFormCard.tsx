@@ -187,7 +187,7 @@ export function TaskFormCard({
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-medium text-[var(--tempo-muted-foreground)]">
-            Start hour (0–23)
+            Start time
             <input
               className="mt-1 w-full rounded-lg border border-[var(--tempo-border)] bg-[var(--tempo-muted)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--tempo-ring)]"
               max={23}

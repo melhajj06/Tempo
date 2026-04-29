@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 type TempoAIProps = {
-  /** Dense plaintext: full tasks, blocked time, reminders, sticky notes, archives, conflicts, calendar refs. Server-only with API key. */
+  /** Dense plaintext: full tasks, blocked time, reminders, goals, sticky notes, archives, conflicts, calendar refs. Server-only with API key. */
   context: string;
 };
 

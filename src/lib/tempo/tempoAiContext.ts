@@ -1,4 +1,4 @@
-import type { BlockedTime, Reminder, StickyNote, Task } from "@/components/tempo/types";
+import type { BlockedTime, Goal, Reminder, StickyNote, Task } from "@/components/tempo/types";
 
 import type { ScheduleConflictPair } from "./scheduleConflicts";
 import { computeWeightScore } from "./weightingEngine";
@@ -23,8 +23,8 @@ function sortCalendar(tasks: Task[]): Task[] {
 }
 
 /**
- * Rich plaintext snapshot for TempoAI: full active schedule, deadlines, blocks, reminders, sticky notes,
- * conflicts, archived history, plus calendar framing so the model can answer deadline questions accurately.
+ * Rich plaintext snapshot for TempoAI: full active schedule, deadlines, blocks, reminders, goals,
+ * sticky notes, conflicts, archived history, plus calendar framing so the model can answer deadline questions accurately.
  */
 export function serializeTempoAiContext(params: {
   nowDate: string;
@@ -35,6 +35,7 @@ export function serializeTempoAiContext(params: {
   rankedTasks: Task[];
   blockedTimes: BlockedTime[];
   reminders: Reminder[];
+  goals: Goal[];
   stickyNotes: StickyNote[];
   allTasksForLookup: Task[];
   scheduleConflicts: ScheduleConflictPair[];
@@ -109,6 +110,22 @@ export function serializeTempoAiContext(params: {
     params.reminders.forEach((r) => {
       const linked = byId.get(r.taskId);
       out += `- ${r.minutesBefore} minutes before "${linked?.title ?? `task id ${r.taskId}`}" (task id ${r.taskId})\n`;
+    });
+    out += "\n";
+  }
+
+  out += "--- GOALS (LINKED TASK IDS REFERENCE THE BLOCKS ABOVE) ---\n";
+  if (params.goals.length === 0) {
+    out += "None.\n\n";
+  } else {
+    params.goals.forEach((g) => {
+      const titles = g.taskIds
+        .map((tid) => {
+          const t = byId.get(tid);
+          return t ? `"${t.title}" (${tid}, ${t.status})` : `(missing id ${tid})`;
+        })
+        .join("; ");
+      out += `- ${g.title} (goal id ${g.id}): linked tasks → ${titles}\n`;
     });
     out += "\n";
   }

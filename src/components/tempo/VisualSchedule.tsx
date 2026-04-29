@@ -846,7 +846,11 @@ export function VisualSchedule({
   return (
     <div
       ref={scheduleRootRef}
-      className="w-full rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm fullscreen:fixed fullscreen:inset-0 fullscreen:z-[100] fullscreen:flex fullscreen:h-screen fullscreen:flex-col fullscreen:overflow-hidden fullscreen:rounded-none fullscreen:p-4 sm:fullscreen:p-6"
+      className={`w-full rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm ${
+        isFullscreen
+          ? "fixed inset-0 z-[100] flex min-h-0 flex-col overflow-hidden rounded-none p-4 sm:p-6"
+          : ""
+      }`}
     >
       <div className="mb-4 flex shrink-0 flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -886,16 +890,44 @@ export function VisualSchedule({
               Month
             </button>
             <button
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               aria-pressed={isFullscreen}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+              className={`inline-flex items-center justify-center rounded-lg border p-2 transition-colors ${
                 isFullscreen
                   ? "border-blue-600 bg-blue-600 text-white"
                   : "hover:bg-slate-100"
               }`}
               onClick={() => void toggleFullscreen()}
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
               type="button"
             >
-              {isFullscreen ? "Exit fullscreen" : "Expand"}
+              {isFullscreen ? (
+                <svg
+                  aria-hidden={true}
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                </svg>
+              ) : (
+                <svg
+                  aria-hidden={true}
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
+              )}
             </button>
           </div>
         </div>
@@ -933,7 +965,13 @@ export function VisualSchedule({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto fullscreen:overflow-auto">
+      <div
+        className={
+          isFullscreen
+            ? "min-h-0 flex-[1_1_0%] basis-0 overflow-auto overscroll-y-auto"
+            : "min-h-0 flex-1 overflow-auto"
+        }
+      >
         {viewType === "weekly" && renderWeeklyView()}
         {viewType === "daily" && renderDailyView()}
         {viewType === "monthly" && renderMonthlyView()}
