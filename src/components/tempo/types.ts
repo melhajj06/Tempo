@@ -14,6 +14,14 @@ export type Task = {
   archiveReason: string | null;
 };
 
+export type BlockedTime = {
+  id: number;
+  date: string;
+  startHour: number;
+  durationMinutes: number;
+  reason: string;
+};
+
 export type Goal = {
   id: number;
   title: string;

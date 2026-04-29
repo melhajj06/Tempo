@@ -3,8 +3,10 @@
 import { FormEvent, useMemo, useState } from "react";
 import { AppHeader } from "../components/tempo/AppHeader";
 import { SidebarMenu } from "../components/tempo/SidebarMenu";
+import { VisualSchedule } from "../components/tempo/VisualSchedule";
 import { initialGoals, initialTasks, tempoTabs } from "../components/tempo/constants";
-import { Goal, Reminder, SessionState, Task, TaskStatus, TempoTab } from "../components/tempo/types";
+import { CalendarViewType } from "../components/tempo/VisualSchedule";
+import { BlockedTime, Goal, Reminder, SessionState, Task, TaskStatus, TempoTab } from "../components/tempo/types";
 
 export default function TempoDashboard() {
   const [loggedIn] = useState(true);
@@ -40,6 +42,12 @@ export default function TempoDashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [archiveReasonInput, setArchiveReasonInput] = useState("Completed");
   const [uiMessage, setUiMessage] = useState("Welcome back. Core Tempo features are active.");
+  const [weekStartDate, setWeekStartDate] = useState("2026-04-27");
+  const [calendarViewType, setCalendarViewType] = useState<CalendarViewType>("weekly");
+  const [blockedTimes, setBlockedTimes] = useState<BlockedTime[]>([]);
+  const [blockingMode, setBlockingMode] = useState(false);
+  const [blockingStartHour, setBlockingStartHour] = useState<number | null>(null);
+  const [blockingReason, setBlockingReason] = useState("Meeting");
 
   const nowDate = "2026-04-27";
   const activeTasks = useMemo(() => tasks.filter((task) => !task.archived), [tasks]);
@@ -117,6 +125,42 @@ export default function TempoDashboard() {
       .filter((task) => task.date === nowDate)
       .sort((a, b) => a.startHour - b.startHour);
   }, [activeTasks]);
+
+  const handleTaskTimeUpdate = (taskId: number, startHour: number, newDate: string) => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id !== taskId) {
+          return task;
+        }
+        return { ...task, startHour, date: newDate };
+      }),
+    );
+    const task = tasks.find((t) => t.id === taskId);
+    setUiMessage(`Task "${task?.title}" rescheduled to ${newDate} at ${String(startHour).padStart(2, "0")}:00.`);
+  };
+
+  const handleWeekNavigation = (direction: "prev" | "next") => {
+    const current = new Date(weekStartDate);
+    current.setDate(current.getDate() + (direction === "next" ? 7 : -7));
+    setWeekStartDate(current.toISOString().split("T")[0]);
+  };
+
+  const addBlockedTime = (date: string, startHour: number, durationMinutes: number) => {
+    const newBlocked: BlockedTime = {
+      id: Date.now(),
+      date,
+      startHour,
+      durationMinutes,
+      reason: blockingReason,
+    };
+    setBlockedTimes((prev) => [...prev, newBlocked]);
+    setUiMessage(`Blocked ${durationMinutes / 60}h starting at ${String(startHour).padStart(2, "0")}:00 on ${date}`);
+  };
+
+  const removeBlockedTime = (blockedId: number) => {
+    setBlockedTimes((prev) => prev.filter((b) => b.id !== blockedId));
+    setUiMessage("Blocked time removed.");
+  };
 
   const toggleTaskStatus = (taskId: number) => {
     setTasks((prev) =>
@@ -332,53 +376,100 @@ export default function TempoDashboard() {
 
       <div className="mx-auto max-w-7xl space-y-6 p-6 md:p-8">
         {activeTab === "Dashboard" && (
-          <section className="grid gap-6 lg:grid-cols-3">
-            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
-              <h2 className="mb-3 text-xl font-semibold">Daily Dashboard (Today)</h2>
-              <div className="space-y-2">
-                {todayItems.length === 0 ? (
-                  <div className="rounded-lg border border-dashed p-4 text-sm">
-                    No tasks or sessions scheduled today. Enjoy your free time or get ahead.
+          <section className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Left side: Daily Dashboard and Goals */}
+              <div className="lg:col-span-1 space-y-6">
+                <div className="rounded-2xl border bg-white p-5 shadow-sm">
+                  <h2 className="mb-3 text-xl font-semibold">Daily Dashboard (Today)</h2>
+                  <div className="space-y-2">
+                    {todayItems.length === 0 ? (
+                      <div className="rounded-lg border border-dashed p-4 text-sm">
+                        No tasks or sessions scheduled today. Enjoy your free time or get ahead.
+                      </div>
+                    ) : (
+                      todayItems.map((task) => (
+                        <div
+                          key={task.id}
+                          className="rounded-lg border p-3 text-sm space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium">{task.startHour}:00</div>
+                            <div className="flex-1">{task.title}</div>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-xs text-slate-600">{task.category} • {task.status}</div>
+                            <button
+                              className="rounded-md border px-2 py-1 text-xs hover:bg-slate-100 whitespace-nowrap"
+                              onClick={() => toggleTaskStatus(task.id)}
+                              type="button"
+                            >
+                              Cycle Status
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
-                ) : (
-                  todayItems.map((task) => (
-                    <div
-                      key={task.id}
-                      className="grid grid-cols-12 items-center gap-2 rounded-lg border p-3 text-sm"
-                    >
-                      <div className="col-span-2 font-medium">{task.startHour}:00</div>
-                      <div className="col-span-4">{task.title}</div>
-                      <div className="col-span-2">{task.category}</div>
-                      <div className="col-span-2">{task.status}</div>
-                      <button
-                        className="col-span-2 rounded-md border px-2 py-1 hover:bg-slate-100"
-                        onClick={() => toggleTaskStatus(task.id)}
-                        type="button"
-                      >
-                        Cycle Status
-                      </button>
-                    </div>
-                  ))
-                )}
+                </div>
+
+                <div className="rounded-2xl border bg-white p-5 shadow-sm">
+                  <h2 className="mb-3 text-xl font-semibold">Goals</h2>
+                  <div className="space-y-3">
+                    {goalProgress.map(({ goal, percentage }) => (
+                      <div key={goal.id}>
+                        <div className="mb-1 flex justify-between text-sm">
+                          <span>{goal.title}</span>
+                          <span>{percentage}%</span>
+                        </div>
+                        <div className="h-2 rounded bg-slate-200">
+                          <div className="h-2 rounded bg-slate-800" style={{ width: `${percentage}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right side: Visual Schedule */}
+              <div className="lg:col-span-2">
+                <VisualSchedule
+                  tasks={tasks}
+                  onTaskUpdate={handleTaskTimeUpdate}
+                  selectedDate={nowDate}
+                  weekStart={weekStartDate}
+                  viewType={calendarViewType}
+                  onViewChange={setCalendarViewType}
+                  blockedTimes={blockedTimes}
+                  onAddBlockedTime={addBlockedTime}
+                  onRemoveBlockedTime={removeBlockedTime}
+                  blockingMode={blockingMode}
+                  onBlockingModeChange={setBlockingMode}
+                  blockingReason={blockingReason}
+                  onBlockingReasonChange={setBlockingReason}
+                />
               </div>
             </div>
 
-            <div className="rounded-2xl border bg-white p-5 shadow-sm">
-              <h2 className="mb-3 text-xl font-semibold">Goals</h2>
-              <div className="space-y-3">
-                {goalProgress.map(({ goal, percentage }) => (
-                  <div key={goal.id}>
-                    <div className="mb-1 flex justify-between text-sm">
-                      <span>{goal.title}</span>
-                      <span>{percentage}%</span>
-                    </div>
-                    <div className="h-2 rounded bg-slate-200">
-                      <div className="h-2 rounded bg-slate-800" style={{ width: `${percentage}%` }} />
-                    </div>
-                  </div>
-                ))}
+            {/* Week navigation - only show for weekly view */}
+            {calendarViewType === "weekly" && (
+              <div className="flex justify-center gap-2">
+                <button
+                  className="rounded-lg border px-4 py-2 hover:bg-slate-100 text-sm"
+                  onClick={() => handleWeekNavigation("prev")}
+                  type="button"
+                >
+                  ← Previous Week
+                </button>
+                <button
+                  className="rounded-lg border px-4 py-2 hover:bg-slate-100 text-sm"
+                  onClick={() => handleWeekNavigation("next")}
+                  type="button"
+                >
+                  Next Week →
+                </button>
               </div>
-            </div>
+            )}
           </section>
         )}
 
