@@ -1,18 +1,11 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { TEMPO_APP_PASSWORD } from "@/lib/auth/appCredentials";
 import { buildSessionToken, SESSION_COOKIE_NAME, verifyAppPassword } from "@/lib/auth/session";
 
 export async function POST(req: Request) {
-  const expectedPw = process.env.TEMPO_APP_PASSWORD;
-  if (typeof expectedPw !== "string" || !expectedPw.trim()) {
-    return NextResponse.json(
-      {
-        error: "Server missing TEMPO_APP_PASSWORD. Add it to `.env`.",
-      },
-      { status: 500 },
-    );
-  }
+  const expectedPw = TEMPO_APP_PASSWORD;
 
   let body: { password?: string; label?: string };
   try {
@@ -28,17 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid password." }, { status: 401 });
   }
 
-  let token: string;
-  try {
-    token = buildSessionToken(label || null);
-  } catch {
-    return NextResponse.json(
-      {
-        error: "Server missing TEMPO_SESSION_SECRET (min 16 characters).",
-      },
-      { status: 500 },
-    );
-  }
+  const token = buildSessionToken(label || null);
 
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE_NAME, token, {

@@ -1,5 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
+import { DEFAULT_TEMPO_SESSION_SECRET } from "./appCredentials";
+
 export const SESSION_COOKIE_NAME = "tempo_session";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -9,6 +11,8 @@ export type SessionPayload = {
   exp: number;
   /** Optional nickname shown after login */
   label: string | null;
+  /** Session created via “Continue as guest”. */
+  guest?: boolean;
 };
 
 /** Constant-time compare without leaking lengths (SHA-256 hashed). */
@@ -22,9 +26,10 @@ export function verifyAppPassword(candidate: string, expected: string): boolean 
   }
 }
 
-function getSecret(): string | null {
+function getSessionSecret(): string {
   const s = process.env.TEMPO_SESSION_SECRET?.trim();
-  return s && s.length >= 16 ? s : null;
+  if (s && s.length >= 16) return s;
+  return DEFAULT_TEMPO_SESSION_SECRET;
 }
 
 function sign(payload: SessionPayload, secret: string): string {
@@ -35,8 +40,8 @@ function sign(payload: SessionPayload, secret: string): string {
 
 /** Parse cookie value or null */
 export function parseSession(cookieValue: string | undefined): SessionPayload | null {
-  const secret = getSecret();
-  if (!secret || !cookieValue) return null;
+  const secret = getSessionSecret();
+  if (!cookieValue) return null;
   const dot = cookieValue.indexOf(".");
   if (dot < 1) return null;
   const bodyB64 = cookieValue.slice(0, dot);
@@ -63,11 +68,7 @@ export function parseSession(cookieValue: string | undefined): SessionPayload | 
 }
 
 export function requireSessionSecret(): string {
-  const secret = getSecret();
-  if (!secret) {
-    throw new Error("TEMPO_SESSION_SECRET must be set (min 16 characters).");
-  }
-  return secret;
+  return getSessionSecret();
 }
 
 export function buildSessionToken(label: string | null): string {
@@ -76,6 +77,18 @@ export function buildSessionToken(label: string | null): string {
     v: 1,
     exp: Date.now() + MAX_AGE_MS,
     label: label?.trim().slice(0, 128) || null,
+  };
+  return sign(payload, secret);
+}
+
+/** Signed session for guest access (passwordless). Label shown as “Guest”. */
+export function buildGuestSessionToken(): string {
+  const secret = requireSessionSecret();
+  const payload: SessionPayload = {
+    v: 1,
+    exp: Date.now() + MAX_AGE_MS,
+    label: "Guest",
+    guest: true,
   };
   return sign(payload, secret);
 }

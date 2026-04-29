@@ -13,5 +13,6 @@ export async function GET() {
   return NextResponse.json({
     authenticated: true,
     label: sess.label,
+    guest: sess.guest === true,
   });
 }

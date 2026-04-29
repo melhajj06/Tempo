@@ -61,6 +61,14 @@ const DAYS = 7;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_NAMES_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
 
+function getFullscreenElement(): Element | null {
+  const doc = document as Document & {
+    webkitFullscreenElement?: Element | null;
+    mozFullScreenElement?: Element | null;
+  };
+  return document.fullscreenElement ?? doc.webkitFullscreenElement ?? doc.mozFullScreenElement ?? null;
+}
+
 // Displays the visual schedule with daily, weekly, and monthly calendar views.
 export function VisualSchedule({
   tasks,
@@ -78,6 +86,53 @@ export function VisualSchedule({
   onBlockingReasonChange,
 }: VisualScheduleProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scheduleRootRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const syncFullscreenState = useCallback(() => {
+    const root = scheduleRootRef.current;
+    const fsEl = getFullscreenElement();
+    setIsFullscreen(Boolean(root && fsEl === root));
+  }, []);
+
+  useEffect(() => {
+    syncFullscreenState();
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    document.addEventListener("webkitfullscreenchange", syncFullscreenState);
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
+      document.removeEventListener("webkitfullscreenchange", syncFullscreenState);
+    };
+  }, [syncFullscreenState]);
+
+  const toggleFullscreen = useCallback(async () => {
+    const el = scheduleRootRef.current;
+    if (!el) return;
+    try {
+      if (!getFullscreenElement()) {
+        const wk = el as HTMLElement & {
+          webkitRequestFullscreen?: () => void;
+        };
+        if (typeof el.requestFullscreen === "function") {
+          await el.requestFullscreen();
+        } else if (typeof wk.webkitRequestFullscreen === "function") {
+          wk.webkitRequestFullscreen();
+        }
+      } else {
+        const doc = document as Document & {
+          webkitExitFullscreen?: () => void;
+        };
+        if (typeof document.exitFullscreen === "function") {
+          await document.exitFullscreen();
+        } else if (typeof doc.webkitExitFullscreen === "function") {
+          doc.webkitExitFullscreen();
+        }
+      }
+    } catch {
+      /* user denied / unsupported */
+    }
+  }, []);
+
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [hoveredTask, setHoveredTask] = useState<number | null>(null);
   const [blockingState, setBlockingState] = useState<BlockingState | null>(null);
@@ -789,49 +844,64 @@ export function VisualSchedule({
   };
 
   return (
-    <div className="w-full rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm">
-      <div className="mb-4 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+    <div
+      ref={scheduleRootRef}
+      className="w-full rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm fullscreen:fixed fullscreen:inset-0 fullscreen:z-[100] fullscreen:flex fullscreen:h-screen fullscreen:flex-col fullscreen:overflow-hidden fullscreen:rounded-none fullscreen:p-4 sm:fullscreen:p-6"
+    >
+      <div className="mb-4 flex shrink-0 flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">Visual Schedule</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <button
-              onClick={() => onViewChange("daily")}
               className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 viewType === "daily"
                   ? "bg-blue-600 text-white"
                   : "border hover:bg-slate-100"
               }`}
+              onClick={() => onViewChange("daily")}
               type="button"
             >
               Day
             </button>
             <button
-              onClick={() => onViewChange("weekly")}
               className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 viewType === "weekly"
                   ? "bg-blue-600 text-white"
                   : "border hover:bg-slate-100"
               }`}
+              onClick={() => onViewChange("weekly")}
               type="button"
             >
               Week
             </button>
             <button
-              onClick={() => onViewChange("monthly")}
               className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 viewType === "monthly"
                   ? "bg-blue-600 text-white"
                   : "border hover:bg-slate-100"
               }`}
+              onClick={() => onViewChange("monthly")}
               type="button"
             >
               Month
+            </button>
+            <button
+              aria-pressed={isFullscreen}
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                isFullscreen
+                  ? "border-blue-600 bg-blue-600 text-white"
+                  : "hover:bg-slate-100"
+              }`}
+              onClick={() => void toggleFullscreen()}
+              type="button"
+            >
+              {isFullscreen ? "Exit fullscreen" : "Expand"}
             </button>
           </div>
         </div>
 
         {/* Blocking mode controls */}
-        <div className="flex gap-2 items-center border-t pt-3">
+        <div className="flex items-center gap-2 border-t pt-3">
           <button
             onClick={() => onBlockingModeChange(!blockingMode)}
             className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -863,11 +933,13 @@ export function VisualSchedule({
         </div>
       </div>
 
-      {viewType === "weekly" && renderWeeklyView()}
-      {viewType === "daily" && renderDailyView()}
-      {viewType === "monthly" && renderMonthlyView()}
+      <div className="min-h-0 flex-1 overflow-auto fullscreen:overflow-auto">
+        {viewType === "weekly" && renderWeeklyView()}
+        {viewType === "daily" && renderDailyView()}
+        {viewType === "monthly" && renderMonthlyView()}
+      </div>
 
-      <div className="mt-4 text-xs text-slate-600">
+      <div className="mt-4 shrink-0 text-xs text-slate-600 fullscreen:mt-2">
         <p>💡 Drag tasks to reschedule them to a different time or day</p>
       </div>
     </div>

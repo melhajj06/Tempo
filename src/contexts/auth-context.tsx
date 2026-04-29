@@ -5,6 +5,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 export type TempoAuthUser = {
   /** Optional display name typed at login. */
   label: string | null;
+  /** Present when signed in via “Continue as guest”. */
+  isGuest?: boolean;
 };
 
 type AuthContextValue = {
@@ -22,9 +24,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshSession = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/me", { credentials: "include", cache: "no-store" });
-      const data: { authenticated?: boolean; label?: string | null } = await response.json();
+      const data: { authenticated?: boolean; label?: string | null; guest?: boolean } =
+        await response.json();
       if (data.authenticated === true) {
-        setUser({ label: data.label ?? null });
+        setUser({ label: data.label ?? null, isGuest: data.guest === true });
       } else {
         setUser(null);
       }

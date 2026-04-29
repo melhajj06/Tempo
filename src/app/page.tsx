@@ -1,15 +1,17 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AppHeader } from "../components/tempo/AppHeader";
 import { DeepFocusMode } from "../components/tempo/DeepFocusMode";
+import { LandingGate } from "../components/tempo/LandingGate";
 import { SidebarMenu } from "../components/tempo/SidebarMenu";
 import { TempoAI } from "../components/tempo/TempoAI";
+import { StickyNoteBoard } from "../components/tempo/StickyNoteBoard";
 import { TaskFormCard } from "../components/tempo/TaskFormCard";
 import { VisualSchedule } from "../components/tempo/VisualSchedule";
-import { categoryBlockClasses, initialGoals, initialTasks, tempoTabs } from "../components/tempo/constants";
+import { categoryBlockClasses, initialStickyNotes, initialTasks, tempoTabs } from "../components/tempo/constants";
 import type { CalendarViewType } from "../components/tempo/VisualSchedule";
-import { BlockedTime, Goal, Reminder, SessionState, Task, TaskStatus, TempoTab } from "../components/tempo/types";
+import { BlockedTime, Reminder, StickyNote, Task, TaskStatus, TempoTab } from "../components/tempo/types";
 import type { TaskFormPayload } from "../components/tempo/TaskFormCard";
 import { rankTasksByWeight, computeWeightScore } from "@/lib/tempo/weightingEngine";
 import { findScheduleConflicts } from "@/lib/tempo/scheduleConflicts";
@@ -18,7 +20,7 @@ import { useAuth } from "@/contexts/auth-context";
 export default function TempoDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [goals, setGoals] = useState<Goal[]>(initialGoals);
+  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>(initialStickyNotes);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [activeQuery, setActiveQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
@@ -37,14 +39,7 @@ export default function TempoDashboard() {
   const [selectedTaskForReminder, setSelectedTaskForReminder] = useState(1);
   const [reminderMinutes, setReminderMinutes] = useState(10);
   const [reminderError, setReminderError] = useState("");
-  const [newGoalTitle, setNewGoalTitle] = useState("");
-  const [goalTaskSelection, setGoalTaskSelection] = useState<number[]>([]);
-  const [goalError, setGoalError] = useState("");
-  const [sessionDuration, setSessionDuration] = useState(25);
-  const [sessionError, setSessionError] = useState("");
-  const [sessionState, setSessionState] = useState<SessionState>("idle");
   const [focusTaskId, setFocusTaskId] = useState<number>(1);
-  const [breakMinutes, setBreakMinutes] = useState(5);
   const [activeTab, setActiveTab] = useState<TempoTab>("Dashboard");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [archiveReasonInput, setArchiveReasonInput] = useState("Completed");
@@ -77,7 +72,7 @@ export default function TempoDashboard() {
         rankedTasks,
         blockedTimes,
         reminders,
-        goals,
+        stickyNotes,
         allTasksForLookup: tasks,
         scheduleConflicts,
       }),
@@ -90,7 +85,7 @@ export default function TempoDashboard() {
       rankedTasks,
       blockedTimes,
       reminders,
-      goals,
+      stickyNotes,
       tasks,
       scheduleConflicts,
     ],
@@ -139,29 +134,6 @@ export default function TempoDashboard() {
     archiveDateTo,
     archiveSort,
   ]);
-
-  const focusConflict = useMemo(() => {
-    const selected = tasks.find((task) => task.id === focusTaskId);
-    if (!selected) {
-      return null;
-    }
-    return activeTasks.find(
-      (task) =>
-        task.id !== selected.id &&
-        task.date === selected.date &&
-        task.startHour <= selected.startHour &&
-        task.startHour + task.durationMinutes / 60 > selected.startHour,
-    );
-  }, [activeTasks, focusTaskId, tasks]);
-
-  const goalProgress = useMemo(() => {
-    return goals.map((goal) => {
-      const linked = tasks.filter((task) => goal.taskIds.includes(task.id));
-      const done = linked.filter((task) => task.status === "Completed").length;
-      const percentage = linked.length === 0 ? 0 : Math.round((done / linked.length) * 100);
-      return { goal, percentage };
-    });
-  }, [goals, tasks]);
 
   const todayItems = useMemo(() => {
     return activeTasks
@@ -291,26 +263,29 @@ export default function TempoDashboard() {
     setUiMessage("Reminder scheduled successfully.");
   };
 
-  const createGoal = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setGoalError("");
-    if (!newGoalTitle.trim()) {
-      setGoalError("Goal title is required.");
-      return;
-    }
-    if (goalTaskSelection.length === 0) {
-      setGoalError("Associate at least one task to track progress.");
-      return;
-    }
-    const goal: Goal = {
-      id: Date.now(),
-      title: newGoalTitle.trim(),
-      taskIds: goalTaskSelection,
-    };
-    setGoals((prev) => [...prev, goal]);
-    setNewGoalTitle("");
-    setGoalTaskSelection([]);
-    setUiMessage("Goal created and linked to selected tasks.");
+  const updateStickyNote = (
+    id: number,
+    patch: Partial<Pick<StickyNote, "x" | "y" | "text">>,
+  ) => {
+    setStickyNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...patch } : n)));
+  };
+
+  const addStickyNote = () => {
+    setStickyNotes((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text: "",
+        x: Math.min(0.65, 0.06 + Math.random() * 0.55),
+        y: Math.min(0.6, 0.08 + Math.random() * 0.42),
+      },
+    ]);
+    setUiMessage("New sticky note placed on your board.");
+  };
+
+  const removeStickyNote = (id: number) => {
+    setStickyNotes((prev) => prev.filter((n) => n.id !== id));
+    setUiMessage("Sticky note removed.");
   };
 
   const exportAgenda = () => {
@@ -395,63 +370,21 @@ export default function TempoDashboard() {
     setArchiveActionPendingTaskId(taskId);
     window.setTimeout(() => {
       setTasks((prev) => prev.filter((task) => task.id !== taskId));
-      setGoals((prev) =>
-        prev.map((goal) => ({
-          ...goal,
-          taskIds: goal.taskIds.filter((goalTaskId) => goalTaskId !== taskId),
-        })),
-      );
       setReminders((prev) => prev.filter((reminder) => reminder.taskId !== taskId));
       setArchiveActionPendingTaskId(null);
       setUiMessage("Archived task permanently deleted.");
     }, 500);
   };
 
-  const startFocusSession = () => {
-    setSessionError("");
-    if (sessionDuration < 10 || sessionDuration > 240) {
-      setSessionError("Duration must be between 10 and 240 minutes.");
-      return;
-    }
-    if (focusConflict) {
-      setSessionError(
-        `Conflict found with ${focusConflict.title}. Adjust time, proceed anyway, or cancel.`,
-      );
-      return;
-    }
-    setSessionState("active");
-    setUiMessage("Focus session started.");
-  };
-
-  const startBreak = () => {
-    if (sessionState !== "active") {
-      return;
-    }
-    setSessionState("break");
-    setUiMessage("Break started. Focus timer paused.");
-  };
-
-  const resumeFocus = () => {
-    if (sessionState !== "break") {
-      return;
-    }
-    if (breakMinutes > 30) {
-      setSessionError("Break extension exceeds current limit.");
-      return;
-    }
-    setSessionState("active");
-    setUiMessage("Break logged and focus resumed.");
-  };
-
-  const stopFocus = () => {
-    setSessionState("idle");
-    setUiMessage("Focus session ended and saved.");
-  };
-
   if (authLoading) {
     return (
       <main className="min-h-screen bg-[var(--tempo-canvas)] text-[var(--tempo-ink)]">
-        <AppHeader onOpenMenu={() => {}} showMenu={false} uiMessage="Loading session…" />
+        <AppHeader
+          onOpenMenu={() => {}}
+          showMenu={false}
+          showNavbarAuth={false}
+          uiMessage="Loading session…"
+        />
         <div className="flex min-h-[45vh] items-center justify-center px-4 text-sm text-[var(--tempo-muted-foreground)]">
           Loading…
         </div>
@@ -462,13 +395,13 @@ export default function TempoDashboard() {
   if (!user) {
     return (
       <main className="min-h-screen bg-[var(--tempo-canvas)] text-[var(--tempo-ink)]">
-        <AppHeader onOpenMenu={() => {}} showMenu={false} uiMessage="Sign in to use Tempo." />
-        <div className="mx-auto max-w-md px-6 py-20 text-center">
-          <p className="text-xl font-semibold tracking-tight">Welcome to Tempo</p>
-          <p className="mt-3 text-sm leading-relaxed text-[var(--tempo-muted-foreground)]">
-            Use <span className="font-medium text-[var(--tempo-ink)]">Sign in</span> in the top right to continue with Google or email.
-          </p>
-        </div>
+        <AppHeader
+          onOpenMenu={() => {}}
+          showMenu={false}
+          showNavbarAuth={false}
+          uiMessage="Sign in or continue as guest."
+        />
+        <LandingGate />
       </main>
     );
   }
@@ -478,7 +411,7 @@ export default function TempoDashboard() {
       <AppHeader
         onOpenMenu={() => setIsMenuOpen(true)}
         primaryAction={{
-          label: "Deep focus",
+          label: "Focus",
           onClick: () => setDeepFocusOpen(true),
           disabled: !deepFocusSubject,
         }}
@@ -607,23 +540,14 @@ export default function TempoDashboard() {
                 </div>
 
                 <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm">
-                  <h2 className="mb-3 text-xl font-semibold tracking-tight">Goals</h2>
-                  <div className="space-y-3">
-                    {goalProgress.map(({ goal, percentage }) => (
-                      <div key={goal.id}>
-                        <div className="mb-1 flex justify-between text-sm">
-                          <span>{goal.title}</span>
-                          <span>{percentage}%</span>
-                        </div>
-                        <div className="h-2 rounded bg-[var(--tempo-muted)]">
-                          <div
-                            className="h-2 rounded bg-[var(--tempo-ink)]"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <h2 className="mb-3 text-xl font-semibold tracking-tight">Sticky notes</h2>
+                  <StickyNoteBoard
+                    boardClassName="!min-h-[280px] max-h-[360px]"
+                    notes={stickyNotes}
+                    onAddNote={addStickyNote}
+                    onRemoveNote={removeStickyNote}
+                    onUpdateNote={updateStickyNote}
+                  />
                 </div>
               </div>
 
@@ -886,78 +810,28 @@ export default function TempoDashboard() {
           </section>
         )}
 
-        {activeTab === "Goals" && (
-          <section className="grid gap-6 lg:grid-cols-3">
-            <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-2">
-              <h2 className="mb-3 text-xl font-semibold">Create Goal and Link Tasks</h2>
-              <form className="space-y-3" onSubmit={createGoal}>
-                <input
-                  className="w-full rounded-lg border p-2 text-sm"
-                  onChange={(event) => setNewGoalTitle(event.target.value)}
-                  placeholder="Goal title..."
-                  value={newGoalTitle}
-                />
-                <div className="grid gap-2 md:grid-cols-2">
-                  {activeTasks.map((task) => (
-                    <label key={task.id} className="flex items-center gap-2 rounded border p-2 text-sm">
-                      <input
-                        checked={goalTaskSelection.includes(task.id)}
-                        onChange={(event) =>
-                          setGoalTaskSelection((prev) =>
-                            event.target.checked
-                              ? [...prev, task.id]
-                              : prev.filter((id) => id !== task.id),
-                          )
-                        }
-                        type="checkbox"
-                      />
-                      {task.title}
-                    </label>
-                  ))}
-                </div>
-                <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white" type="submit">
-                  Create Goal
-                </button>
-                {goalError && <p className="text-sm text-red-600">{goalError}</p>}
-              </form>
-            </div>
-
-            <div className="rounded-2xl border bg-white p-5 shadow-sm">
-              <h2 className="mb-3 text-xl font-semibold">Goal Progress</h2>
-              <div className="space-y-3">
-                {goalProgress.map(({ goal, percentage }) => (
-                  <div key={goal.id}>
-                    <div className="mb-1 flex justify-between text-sm">
-                      <span>{goal.title}</span>
-                      <span>{percentage}%</span>
-                    </div>
-                    <div className="h-2 rounded bg-slate-200">
-                      <div className="h-2 rounded bg-slate-800" style={{ width: `${percentage}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {activeTab === "Sticky Notes" && (
+          <section className="grid gap-6 lg:grid-cols-1">
+            <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-6 shadow-sm">
+              <h2 className="mb-5 text-xl font-semibold tracking-tight text-[var(--tempo-ink)]">Sticky notes</h2>
+              <StickyNoteBoard
+                notes={stickyNotes}
+                onAddNote={addStickyNote}
+                onRemoveNote={removeStickyNote}
+                onUpdateNote={updateStickyNote}
+              />
             </div>
           </section>
         )}
 
         {activeTab === "Focus" && (
-          <section className="grid gap-6 lg:grid-cols-3">
-            <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-5 shadow-sm lg:col-span-3">
-              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                <h2 className="text-xl font-semibold">Focus session</h2>
-                <button
-                  className="rounded-lg bg-[var(--tempo-ink)] px-4 py-2 text-sm font-medium text-[var(--tempo-surface)] disabled:opacity-40"
-                  disabled={!deepFocusSubject}
-                  onClick={() => setDeepFocusOpen(true)}
-                  type="button"
-                >
-                  Enter Deep Focus
-                </button>
-              </div>
-              <div className="grid gap-2 md:grid-cols-3">
+          <section className="mx-auto max-w-md">
+            <div className="rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-8 shadow-sm">
+              <h2 className="text-center text-xl font-semibold tracking-tight">Focus</h2>
+              <label className="mt-8 block">
+                <span className="sr-only">Task</span>
                 <select
-                  className="rounded-lg border p-2 text-sm"
+                  className="w-full rounded-lg border border-[var(--tempo-border)] bg-[var(--tempo-muted)] p-3 text-sm"
                   onChange={(event) => setFocusTaskId(Number(event.target.value))}
                   value={focusTaskId}
                 >
@@ -967,48 +841,18 @@ export default function TempoDashboard() {
                     </option>
                   ))}
                 </select>
-                <input
-                  className="rounded-lg border p-2 text-sm"
-                  max={240}
-                  min={10}
-                  onChange={(event) => setSessionDuration(Number(event.target.value))}
-                  type="number"
-                  value={sessionDuration}
-                />
-                <input
-                  className="rounded-lg border p-2 text-sm"
-                  max={30}
-                  min={1}
-                  onChange={(event) => setBreakMinutes(Number(event.target.value))}
-                  type="number"
-                  value={breakMinutes}
-                />
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white"
-                  onClick={startFocusSession}
-                  type="button"
-                >
-                  Start Focus Session
-                </button>
-                <button className="rounded-lg border px-3 py-2 text-sm" onClick={startBreak} type="button">
-                  Start Break
-                </button>
-                <button className="rounded-lg border px-3 py-2 text-sm" onClick={resumeFocus} type="button">
-                  Resume Focus
-                </button>
-                <button className="rounded-lg border px-3 py-2 text-sm" onClick={stopFocus} type="button">
-                  End Session
-                </button>
-              </div>
-              <p className="mt-2 text-sm">Session state: {sessionState}</p>
-              {focusConflict && (
-                <p className="mt-2 rounded bg-amber-100 p-2 text-sm">
-                  Conflict detected with {focusConflict.title}. Choose adjust/proceed/cancel behavior.
-                </p>
+              </label>
+              {activeTasks.length === 0 && (
+                <p className="mt-3 text-center text-sm text-[var(--tempo-muted-foreground)]">Add an active task first.</p>
               )}
-              {sessionError && <p className="mt-2 text-sm text-red-600">{sessionError}</p>}
+              <button
+                className="mt-6 w-full rounded-lg bg-[var(--tempo-ink)] py-3 text-sm font-medium text-[var(--tempo-surface)] disabled:opacity-40"
+                disabled={!deepFocusSubject}
+                onClick={() => setDeepFocusOpen(true)}
+                type="button"
+              >
+                Open focus session
+              </button>
             </div>
           </section>
         )}

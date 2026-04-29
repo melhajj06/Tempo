@@ -1,4 +1,4 @@
-import { Goal, Task, TempoTab } from "./types";
+import { StickyNote, Task, TempoTab } from "./types";
 
 /** Tailwind class sets for agenda blocks by course/category (pastel red / blue / green / yellow). */
 export function categoryBlockClasses(category: string): string {
@@ -17,7 +17,7 @@ export const tempoTabs: TempoTab[] = [
   "Active Tasks",
   "Archive",
   "Reminders",
-  "Goals",
+  "Sticky Notes",
   "Focus",
   "Export",
 ];
@@ -86,8 +86,7 @@ export const initialTasks: Task[] = [
   },
 ];
 
-// Provides starter goal data and links each goal to related task IDs.
-export const initialGoals: Goal[] = [
-  { id: 1, title: "Graduate Strong", taskIds: [1, 2, 4] },
-  { id: 2, title: "Finish Senior Project", taskIds: [1] },
+export const initialStickyNotes: StickyNote[] = [
+  { id: 1, text: "Ship the demo", x: 0.06, y: 0.1 },
+  { id: 2, text: "Call advisor — Friday", x: 0.48, y: 0.14 },
 ];

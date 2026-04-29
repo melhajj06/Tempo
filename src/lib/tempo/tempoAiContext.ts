@@ -1,4 +1,4 @@
-import type { BlockedTime, Goal, Reminder, Task } from "@/components/tempo/types";
+import type { BlockedTime, Reminder, StickyNote, Task } from "@/components/tempo/types";
 
 import type { ScheduleConflictPair } from "./scheduleConflicts";
 import { computeWeightScore } from "./weightingEngine";
@@ -23,7 +23,7 @@ function sortCalendar(tasks: Task[]): Task[] {
 }
 
 /**
- * Rich plaintext snapshot for TempoAI: full active schedule, deadlines, blocks, reminders, goals,
+ * Rich plaintext snapshot for TempoAI: full active schedule, deadlines, blocks, reminders, sticky notes,
  * conflicts, archived history, plus calendar framing so the model can answer deadline questions accurately.
  */
 export function serializeTempoAiContext(params: {
@@ -35,7 +35,7 @@ export function serializeTempoAiContext(params: {
   rankedTasks: Task[];
   blockedTimes: BlockedTime[];
   reminders: Reminder[];
-  goals: Goal[];
+  stickyNotes: StickyNote[];
   allTasksForLookup: Task[];
   scheduleConflicts: ScheduleConflictPair[];
 }): string {
@@ -113,18 +113,13 @@ export function serializeTempoAiContext(params: {
     out += "\n";
   }
 
-  out += "--- GOALS (LINKED TASK IDS REFERENCE THE BLOCKS ABOVE) ---\n";
-  if (params.goals.length === 0) {
+  out += "--- STICKY NOTES (USER freeform text on the bulletin board) ---\n";
+  if (params.stickyNotes.length === 0) {
     out += "None.\n\n";
   } else {
-    params.goals.forEach((g) => {
-      const titles = g.taskIds
-        .map((tid) => {
-          const t = byId.get(tid);
-          return t ? `"${t.title}" (${tid}, ${t.status})` : `(missing id ${tid})`;
-        })
-        .join("; ");
-      out += `- ${g.title} (goal id ${g.id}): linked tasks → ${titles}\n`;
+    params.stickyNotes.forEach((n) => {
+      const body = n.text.trim() || "(empty)";
+      out += `- [id ${n.id}] ${body.replace(/\n/g, " ")}\n`;
     });
     out += "\n";
   }

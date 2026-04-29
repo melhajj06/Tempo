@@ -5,16 +5,24 @@ import { NavbarAuth } from "./NavbarAuth";
 type AppHeaderProps = {
   uiMessage: string;
   onOpenMenu: () => void;
-  /** Optional quick action shown on larger screens (e.g., Deep Focus). */
+  /** Optional quick action shown on larger screens (e.g., Focus). */
   primaryAction?: { label: string; onClick: () => void; disabled?: boolean };
   /** Show slide-out menu trigger; omit on sign-in-only shells. */
   showMenu?: boolean;
+  /** Hide account control (when the page provides its own sign-in UI). */
+  showNavbarAuth?: boolean;
 };
 
 /**
  * Top bar: Tempo branding, ambient status message, slide-out navigation, optional primary control.
  */
-export function AppHeader({ uiMessage, onOpenMenu, primaryAction, showMenu = true }: AppHeaderProps) {
+export function AppHeader({
+  uiMessage,
+  onOpenMenu,
+  primaryAction,
+  showMenu = true,
+  showNavbarAuth = true,
+}: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--tempo-border)] bg-[var(--tempo-surface)]/95 backdrop-blur-sm">
       <div className="flex w-full items-center justify-between gap-4 px-4 py-3 md:px-6">
@@ -54,7 +62,7 @@ export function AppHeader({ uiMessage, onOpenMenu, primaryAction, showMenu = tru
           <div className="hidden min-w-0 max-w-xl flex-1 truncate rounded-md border border-[var(--tempo-border)] bg-[var(--tempo-muted)] px-3 py-2 text-sm text-[var(--tempo-muted-foreground)] sm:block">
             {uiMessage}
           </div>
-          <NavbarAuth />
+          {showNavbarAuth ? <NavbarAuth /> : null}
         </div>
       </div>
     </header>

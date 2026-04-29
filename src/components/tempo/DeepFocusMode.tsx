@@ -9,8 +9,8 @@ type TimerPhase = "idle" | "work" | "break";
 type Preset = { label: string; workSeconds: number; breakSeconds: number };
 
 const PRESETS: Preset[] = [
-  { label: "Pomodoro 25 / 5", workSeconds: 25 * 60, breakSeconds: 5 * 60 },
-  { label: "Long focus 50 / 10", workSeconds: 50 * 60, breakSeconds: 10 * 60 },
+  { label: "25 / 5", workSeconds: 25 * 60, breakSeconds: 5 * 60 },
+  { label: "50 / 10", workSeconds: 50 * 60, breakSeconds: 10 * 60 },
 ];
 
 function fmt(mmss: number): string {
@@ -26,7 +26,7 @@ type DeepFocusModeProps = {
 };
 
 /**
- * Distraction-free full-screen surface: single task context + smart Pomodoro with automated break handoff.
+ * Full-screen black distraction-free surface: task context + Pomodoro timer front and center.
  */
 export function DeepFocusMode({ open, task, onClose }: DeepFocusModeProps) {
   const [phase, setPhase] = useState<TimerPhase>("idle");
@@ -100,51 +100,58 @@ export function DeepFocusMode({ open, task, onClose }: DeepFocusModeProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-[var(--tempo-canvas)] text-[var(--tempo-ink)]"
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="deep-focus-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[200] flex flex-col overflow-y-auto bg-black text-zinc-100"
+      role="dialog"
     >
-      <div className="flex items-start justify-between gap-4 border-b border-[var(--tempo-border)] px-6 py-4">
-        <p className="text-xs font-medium uppercase tracking-widest text-[var(--tempo-muted-foreground)]">
-          Deep focus
-        </p>
+      <div className="flex shrink-0 items-center justify-end px-4 py-4 sm:px-6">
         <button
-          className="rounded-lg border border-[var(--tempo-border)] bg-[var(--tempo-surface)] px-3 py-1.5 text-sm hover:bg-[var(--tempo-muted)]"
+          className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900"
           onClick={onClose}
           type="button"
         >
-          Exit (Esc)
+          Exit Esc
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center px-6 pb-16 pt-10">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 pb-20 pt-6 sm:px-8">
         <span
-          className={`mb-4 inline-flex rounded-full border px-3 py-1 text-xs font-medium ${categoryBlockClasses(task.category)}`}
+          className={`mb-6 inline-flex rounded-full border border-zinc-600 px-4 py-1.5 text-xs font-medium ${categoryBlockClasses(task.category)}`}
         >
           {task.category}
         </span>
-        <h1 id="deep-focus-title" className="max-w-2xl text-center text-3xl font-semibold tracking-tight md:text-4xl">
+        <h1
+          id="deep-focus-title"
+          className="max-w-2xl text-center text-xl font-semibold tracking-tight text-zinc-300 sm:text-2xl md:text-3xl"
+        >
           {task.title}
         </h1>
         {task.description ? (
-          <p className="mt-4 max-w-xl text-center text-base leading-relaxed text-[var(--tempo-muted-foreground)]">
-            {task.description}
-          </p>
+          <p className="mt-5 max-w-xl text-center text-sm leading-relaxed text-zinc-500 sm:text-base">{task.description}</p>
         ) : null}
 
-        <div className="mt-12 w-full max-w-md rounded-2xl border border-[var(--tempo-border)] bg-[var(--tempo-surface)] p-6 shadow-sm">
-          <p className="mb-3 text-center text-xs font-medium text-[var(--tempo-muted-foreground)]">
-            Smart Pomodoro
-          </p>
-          <div className="mb-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-16 sm:mt-20">
+          <p className="mb-10 text-center text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">Timer</p>
+          <div className="text-center font-mono text-[4.5rem] leading-none tabular-nums tracking-tight text-white sm:text-8xl md:text-9xl">
+            {phase === "idle" ? (
+              <span className="text-zinc-600">--:--</span>
+            ) : (
+              <span className={phase === "break" ? "text-emerald-400" : undefined}>{fmt(secondsLeft)}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-14 w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950/80 p-6">
+          <p className="mb-4 text-center text-xs uppercase tracking-wide text-zinc-500">Presets</p>
+          <div className="mb-8 flex flex-wrap justify-center gap-2">
             {PRESETS.map((p) => (
               <button
                 key={p.label}
-                className={`rounded-lg border px-3 py-2 text-xs ${
+                className={`rounded-lg border px-4 py-2.5 text-sm transition ${
                   activePreset?.label === p.label
-                    ? "border-[var(--tempo-ink)] bg-[var(--tempo-muted)]"
-                    : "border-[var(--tempo-border)] hover:bg-[var(--tempo-muted)]"
+                    ? "border-zinc-100 bg-zinc-900 text-zinc-100"
+                    : "border-zinc-700 bg-zinc-950 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-900"
                 }`}
                 onClick={() => pickPreset(p)}
                 type="button"
@@ -154,31 +161,23 @@ export function DeepFocusMode({ open, task, onClose }: DeepFocusModeProps) {
             ))}
           </div>
 
-          <div className="mb-6 text-center font-mono text-5xl tabular-nums tracking-tight md:text-6xl">
-            {phase === "idle" ? (
-              <span className="text-[var(--tempo-muted-foreground)]">--:--</span>
-            ) : (
-              <span className={phase === "break" ? "text-emerald-700" : undefined}>{fmt(secondsLeft)}</span>
-            )}
-          </div>
-
-          <p className="mb-4 text-center text-sm text-[var(--tempo-muted-foreground)]">
-            {phase === "idle" && "Choose a preset, then start focus."}
-            {phase === "work" && "Focus on this task only."}
-            {phase === "break" && "Break, step away, then start another focus round when ready."}
+          <p className="mb-6 min-h-[1.25rem] text-center text-sm text-zinc-500">
+            {phase === "idle" && "Choose a preset, then start."}
+            {phase === "work" && "Stay on this task."}
+            {phase === "break" && "Break. Step away when ready."}
           </p>
 
           <div className="flex flex-wrap justify-center gap-2">
             <button
-              className="rounded-lg bg-[var(--tempo-ink)] px-4 py-2 text-sm font-medium text-[var(--tempo-surface)] disabled:opacity-40"
+              className="rounded-lg bg-zinc-100 px-5 py-2.5 text-sm font-medium text-black disabled:opacity-40"
               disabled={!activePreset || phase !== "idle"}
               onClick={startWork}
               type="button"
             >
-              Start focus
+              Start
             </button>
             <button
-              className="rounded-lg border border-[var(--tempo-border)] px-4 py-2 text-sm hover:bg-[var(--tempo-muted)] disabled:opacity-40"
+              className="rounded-lg border border-zinc-600 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-900 disabled:opacity-40"
               disabled={phase !== "work" || !activePreset}
               onClick={skipToBreak}
               type="button"
@@ -186,11 +185,11 @@ export function DeepFocusMode({ open, task, onClose }: DeepFocusModeProps) {
               Skip to break
             </button>
             <button
-              className="rounded-lg border border-[var(--tempo-border)] px-4 py-2 text-sm hover:bg-[var(--tempo-muted)]"
+              className="rounded-lg border border-zinc-700 px-4 py-2.5 text-sm text-zinc-400 hover:bg-zinc-900"
               onClick={endSession}
               type="button"
             >
-              Reset timer
+              Reset
             </button>
           </div>
         </div>

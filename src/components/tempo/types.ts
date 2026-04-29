@@ -33,11 +33,12 @@ export type BlockedTime = {
   reason: string;
 };
 
-// Defines a goal and the tasks connected to that goal.
-export type Goal = {
+/** Paste yellow sticky-square note on the board; x/y are 0–1 inside the bulletin area. */
+export type StickyNote = {
   id: number;
-  title: string;
-  taskIds: number[];
+  text: string;
+  x: number;
+  y: number;
 };
 
 // Defines a reminder linked to a specific task.
@@ -47,16 +48,12 @@ export type Reminder = {
   minutesBefore: number;
 };
 
-// Represents the current state of a focus session.
-export type SessionState = "idle" | "active" | "break";
-
-
 // Represents the available navigation tabs in the Tempo app.
 export type TempoTab =
   | "Dashboard"
   | "Active Tasks"
   | "Archive"
   | "Reminders"
-  | "Goals"
+  | "Sticky Notes"
   | "Focus"
   | "Export";
